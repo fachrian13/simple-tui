@@ -14,4 +14,41 @@
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="simple\pixel.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="simple\tools.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="simple\canvas.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="simple\component\base.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="simple\component\text.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="simple\component\vlayout.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="simple\component\hlayout.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="simple\window.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="simple\component\button.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="simple\component\input.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
 </Project>

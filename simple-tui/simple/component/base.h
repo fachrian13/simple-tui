@@ -3,7 +3,8 @@
 
 #include "../canvas.h"
 
-struct Base {
+class Base {
+public:
 	virtual const Canvas& render() = 0;
 };
 

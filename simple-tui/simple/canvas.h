@@ -12,6 +12,8 @@ public:
 	Pixel at(szt, szt) const;
 	int getWidth() const;
 	int getHeight() const;
+	std::string toString();
+	void setColor(Color, Color);
 
 private:
 	int width = 0;
@@ -42,5 +44,26 @@ int Canvas::getWidth() const {
 int Canvas::getHeight() const {
 	return self.height;
 }
+
+std::string Canvas::toString() {
+	std::string result = "\x1b[0;0H";
+
+	for (int h = 0; h < self.height; ++h) {
+		for (int w = 0; w < self.width; ++w)
+			result += self.pixels.at(h).at(w).toString();
+
+		result += "\n";
+	}
+	result.pop_back();
+
+	return result;
+}
+
+void Canvas::setColor(Color background, Color foreground) {
+	for (int h = 0; h < self.height; ++h)
+		for (int w = 0; w < self.width; ++w)
+			self.pixels.at(h).at(w).background = background, self.pixels.at(h).at(w).foreground = foreground;
+}
+
 
 #endif

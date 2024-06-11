@@ -1,25 +1,25 @@
 #ifndef _VERTICAL_LAYOUT_
 #define _VERTICAL_LAYOUT_
 
-#include "base.h"
+#include "renderable.h"
 #include <algorithm>
-#include <memory>
 
-class VerticalLayout final : public Base {
+class VerticalLayout final : public Renderable {
 public:
-	VerticalLayout(std::vector<std::shared_ptr<Base>>);
-	const Canvas& render() override;
+	VerticalLayout(std::initializer_list<Renderable*>);
+	Canvas& render() override;
+	~VerticalLayout();
 
 private:
 	Canvas canvas;
-	std::vector<std::shared_ptr<Base>> components;
+	std::vector<Renderable*> components;
 };
 
-VerticalLayout::VerticalLayout(std::vector<std::shared_ptr<Base>> components) :
-	components(std::move(components))
+VerticalLayout::VerticalLayout(std::initializer_list<Renderable*> components) :
+	components(components)
 {}
 
-const Canvas& VerticalLayout::render() {
+Canvas& VerticalLayout::render() {
 	std::vector<Canvas> rendered;
 	for (const auto& component : self.components)
 		rendered.push_back(component->render());
@@ -40,9 +40,9 @@ const Canvas& VerticalLayout::render() {
 	return self.canvas;
 }
 
-template<class... T>
-std::shared_ptr<Base> vlayout(T... components) {
-	return std::make_shared<VerticalLayout>(std::vector<std::shared_ptr<Base>>{ components... });
+VerticalLayout::~VerticalLayout() {
+	for (auto& component : self.components)
+		delete component;
 }
 
 #endif

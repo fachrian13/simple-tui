@@ -40,7 +40,7 @@ class Pixel final {
 public:
 	Pixel();
 	Pixel(Color, Color, int, char);
-	const std::string toString();
+	std::string toString();
 
 public:
 	Color background = Color::Default;
@@ -58,7 +58,7 @@ Pixel::Pixel(Color background, Color foreground, int style = Style::Reset, char 
 	value(value)
 {}
 
-const std::string Pixel::toString() {
+std::string Pixel::toString() {
 	std::string result = "\x1b[";
 
 	if (self.style & Style::Reset) result += "0;";

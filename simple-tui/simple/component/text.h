@@ -1,14 +1,12 @@
 #ifndef _TEXT_
 #define _TEXT_
 
-#include "base.h"
-#include <memory>
+#include "renderable.h"
 
-class Text final : public Base {
+class Text final : public Renderable {
 public:
 	Text(std::string);
-	const Canvas& render() override;
-	const bool hasFocus() override;
+	Canvas& render() override;
 
 private:
 	Canvas canvas;
@@ -20,19 +18,11 @@ Text::Text(std::string value) :
 	canvas(value.size(), 1)
 {}
 
-const Canvas& Text::render() {
+Canvas& Text::render() {
 	for (szt i = 0; i < self.content.size(); ++i)
 		self.canvas.at(0, i).value = self.content.at(i);
 
 	return self.canvas;
-}
-
-const bool Text::hasFocus() {
-	return true;
-}
-
-std::shared_ptr<Base> text(std::string value) {
-	return std::make_shared<Text>(value);
 }
 
 #endif

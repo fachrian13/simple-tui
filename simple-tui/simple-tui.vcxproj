@@ -132,15 +132,16 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="simple\canvas.h" />
-    <ClInclude Include="simple\component\base.h" />
+    <ClInclude Include="simple\component\renderable.h" />
     <ClInclude Include="simple\component\button.h" />
     <ClInclude Include="simple\component\hlayout.h" />
     <ClInclude Include="simple\component\input.h" />
+    <ClInclude Include="simple\component\selectable.h" />
     <ClInclude Include="simple\component\text.h" />
     <ClInclude Include="simple\component\vlayout.h" />
+    <ClInclude Include="simple\container.h" />
     <ClInclude Include="simple\pixel.h" />
     <ClInclude Include="simple\tools.h" />
-    <ClInclude Include="simple\window.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

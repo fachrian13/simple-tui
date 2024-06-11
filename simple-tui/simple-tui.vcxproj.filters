@@ -29,7 +29,7 @@
     <ClInclude Include="simple\canvas.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="simple\component\base.h">
+    <ClInclude Include="simple\component\renderable.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="simple\component\text.h">
@@ -41,13 +41,16 @@
     <ClInclude Include="simple\component\hlayout.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="simple\window.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="simple\component\button.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="simple\component\input.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="simple\container.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="simple\component\selectable.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

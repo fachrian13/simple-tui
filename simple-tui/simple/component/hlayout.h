@@ -1,24 +1,24 @@
 #ifndef _HORIZONTAL_LAYOUT_
 #define _HORIZONTAL_LAYOUT_
 
-#include "base.h"
-#include <memory>
+#include "renderable.h"
 
-class HorizontalLayout final : public Base {
+class HorizontalLayout final : public Renderable {
 public:
-	HorizontalLayout(std::vector<std::shared_ptr<Base>>);
-	const Canvas& render() override;
+	HorizontalLayout(std::initializer_list<Renderable*>);
+	Canvas& render() override;
 
 private:
 	Canvas canvas;
-	std::vector<std::shared_ptr<Base>> components;
+	std::vector<Renderable*> components;
+	~HorizontalLayout();
 };
 
-HorizontalLayout::HorizontalLayout(std::vector<std::shared_ptr<Base>> components) :
-	components(std::move(components))
+HorizontalLayout::HorizontalLayout(std::initializer_list<Renderable*> components) :
+	components(components)
 {}
 
-const Canvas& HorizontalLayout::render() {
+Canvas& HorizontalLayout::render() {
 	std::vector<Canvas> rendered;
 	for (const auto& component : self.components)
 		rendered.push_back(component->render());
@@ -43,9 +43,9 @@ const Canvas& HorizontalLayout::render() {
 	return self.canvas;
 }
 
-template<class... T>
-std::shared_ptr<Base> hlayout(T... components) {
-	return std::make_shared<HorizontalLayout>(std::vector<std::shared_ptr<Base>>{ components... });
+HorizontalLayout::~HorizontalLayout() {
+	for (auto& component : self.components)
+		delete component;
 }
 
 #endif

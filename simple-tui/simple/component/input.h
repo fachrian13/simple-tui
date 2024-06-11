@@ -1,16 +1,17 @@
 #ifndef _INPUT_
 #define _INPUT_
 
-#include "base.h"
-#include <memory>
+#include "renderable.h"
+#include "selectable.h"
 
-class Input final : public Base {
+class Input final : public Renderable, public Selectable {
 public:
 	Input(int, std::string);
 	Input& hide(bool);
 	std::string getValue() const;
-	const Canvas& render() override;
-	const bool hasFocus() override;
+	Canvas& render() override;
+	void select() override;
+	void release() override;
 
 private:
 	Canvas canvas;
@@ -36,7 +37,7 @@ std::string Input::getValue() const {
 	return self.content;
 }
 
-const Canvas& Input::render() {
+Canvas& Input::render() {
 	if (self.content.empty()) {
 		if (!self.placeholder.empty()) {
 			for (szt i = 0; i < self.placeholder.size(); ++i) {
@@ -69,16 +70,12 @@ const Canvas& Input::render() {
 	return self.canvas;
 }
 
-const bool Input::hasFocus() {
-	return true;
+void Input::select() {
+	self.canvas.setColor(Color::White, Color::Black);
 }
 
-std::shared_ptr<Base> input(int width, std::string placeholder = "") {
-	return std::make_shared<Input>(width, placeholder);
-}
-
-std::shared_ptr<Base> input(Input& obj) {
-	return std::make_shared<Input>(obj);
+void Input::release() {
+	self.canvas.setColor(Color::Gray, Color::Black);
 }
 
 #endif

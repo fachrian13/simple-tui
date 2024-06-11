@@ -1,55 +1,40 @@
-#include "simple/window.h"
 #include "simple/component/hlayout.h"
 #include "simple/component/text.h"
 #include "simple/component/vlayout.h"
 #include "simple/component/button.h"
 #include "simple/component/input.h"
+#include "simple/container.h"
+#include <iostream>
 
 int main() {
-	Window loginWindow = Window(120, 30);
-	Input userInput = Input(30, "Ucup Mirin");
-	Input passInput = Input(30, "")
-		.hide(true);
-	Input userInput1 = Input(30, "Sasuke bin samsudin");
-	Input passInput1 = Input(30, "*****")
-		.hide(true);
-
-	loginWindow.add(
-		hlayout(
-			vlayout(
-				hlayout(
-					text("Username "),
-					input(userInput)
-				),
-				hlayout(
-					text("Password "),
-					input(passInput)
-				),
-				hlayout(
-					button("Login"),
-					button("Exit")
-				)
-			),
-			vlayout(
-				hlayout(
-					text("Username "),
-					input(userInput)
-				),
-				hlayout(
-					text("Password "),
-					input(passInput1)
-				),
-				hlayout(
-					button("Login"),
-					button("Exit")
-				)
-			)
-		)
-	);
+	auto iUsername = Input(30, "fahrisyn13");
+	auto iPassword = Input(30, "********");
+	auto bLogin = Button("Login", []() {});
+	auto bExit = Button("Exit", []() {});
+	auto lHome = VerticalLayout({
+		new HorizontalLayout({
+			new Text("Username"),
+			&iUsername
+		}),
+		new HorizontalLayout({
+			new Text("Password"),
+			&iPassword
+		}),
+		new HorizontalLayout({
+			&bLogin,
+			new Text(" "),
+			&bExit
+		})
+	});
+	auto container = Container({
+		&iUsername,
+		&iPassword,
+		&bLogin,
+		&bExit
+	});
 
 	while (true) {
-		loginWindow.run();
+		std::cout << lHome.render().toString() << std::flush;
+		container.readInput();
 	}
-
-	std::cin.get();
 }

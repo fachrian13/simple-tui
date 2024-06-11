@@ -7,9 +7,10 @@
 class Input final : public Base {
 public:
 	Input(int, std::string);
-	void hide(bool);
+	Input& hide(bool);
 	std::string getValue() const;
 	const Canvas& render() override;
+	const bool hasFocus() override;
 
 private:
 	Canvas canvas;
@@ -25,8 +26,10 @@ Input::Input(int width, std::string placeholder) :
 	canvas(width, 1, Pixel(Color::Gray, Color::Black, Style::Underline))
 {}
 
-void Input::hide(bool value = true) {
+Input& Input::hide(bool value = true) {
 	self.password = value;
+
+	return self;
 }
 
 std::string Input::getValue() const {
@@ -66,8 +69,16 @@ const Canvas& Input::render() {
 	return self.canvas;
 }
 
+const bool Input::hasFocus() {
+	return true;
+}
+
 std::shared_ptr<Base> input(int width, std::string placeholder = "") {
 	return std::make_shared<Input>(width, placeholder);
+}
+
+std::shared_ptr<Base> input(Input& obj) {
+	return std::make_shared<Input>(obj);
 }
 
 #endif

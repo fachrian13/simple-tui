@@ -8,24 +8,48 @@
 int main() {
 	Window loginWindow = Window(120, 30);
 	Input userInput = Input(30, "Ucup Mirin");
-	Input passInput = Input(30, "");
-	passInput.hide();
+	Input passInput = Input(30, "")
+		.hide(true);
+	Input userInput1 = Input(30, "Sasuke bin samsudin");
+	Input passInput1 = Input(30, "*****")
+		.hide(true);
 
 	loginWindow.add(
 		hlayout(
-			text("Username "),
-			std::make_shared<Input>(userInput)
-		),
-		hlayout(
-			text("Password "),
-			std::make_shared<Input>(passInput)
-		),
-		hlayout(
-			button("Login"),
-			button("Exit")
+			vlayout(
+				hlayout(
+					text("Username "),
+					input(userInput)
+				),
+				hlayout(
+					text("Password "),
+					input(passInput)
+				),
+				hlayout(
+					button("Login"),
+					button("Exit")
+				)
+			),
+			vlayout(
+				hlayout(
+					text("Username "),
+					input(userInput)
+				),
+				hlayout(
+					text("Password "),
+					input(passInput1)
+				),
+				hlayout(
+					button("Login"),
+					button("Exit")
+				)
+			)
 		)
 	);
-	loginWindow.run();
+
+	while (true) {
+		loginWindow.run();
+	}
 
 	std::cin.get();
 }

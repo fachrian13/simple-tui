@@ -6,6 +6,12 @@
 class Base {
 public:
 	virtual const Canvas& render() = 0;
+	virtual void setFocus();
+	virtual const bool hasFocus();
 };
+
+void Base::setFocus() {}
+
+const bool Base::hasFocus() { return false; }
 
 #endif

@@ -10,6 +10,7 @@ public:
 	Button(std::string, std::function<void()>);
 	void onClick();
 	const Canvas& render() override;
+	const bool hasFocus() override;
 
 private:
 	Canvas canvas;
@@ -38,8 +39,16 @@ const Canvas& Button::render() {
 	return self.canvas;
 }
 
+const bool Button::hasFocus() {
+	return true;
+}
+
 std::shared_ptr<Base> button(std::string name, std::function<void()> logic = []() {}) {
 	return std::make_shared<Button>(name, logic);
+}
+
+std::shared_ptr<Base> button(Button obj) {
+	return std::make_shared<Button>(obj);
 }
 
 #endif

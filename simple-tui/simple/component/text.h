@@ -8,6 +8,7 @@ class Text final : public Base {
 public:
 	Text(std::string);
 	const Canvas& render() override;
+	const bool hasFocus() override;
 
 private:
 	Canvas canvas;
@@ -24,6 +25,10 @@ const Canvas& Text::render() {
 		self.canvas.at(0, i).value = self.content.at(i);
 
 	return self.canvas;
+}
+
+const bool Text::hasFocus() {
+	return true;
 }
 
 std::shared_ptr<Base> text(std::string value) {

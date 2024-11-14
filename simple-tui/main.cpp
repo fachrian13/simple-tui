@@ -8,6 +8,8 @@ using simple::buffer;
 int main() {
 	buffer b = buffer(120, 30, pixel(COLOR::GREEN, COLOR::BRIGHT_RED));
 
+	auto bLogin = button("Login");
+	auto bExit = button("Exit");
 	auto v = vlayout(
 		text("VERTICAL-1 "),
 		text("VERTICAL-2 "),

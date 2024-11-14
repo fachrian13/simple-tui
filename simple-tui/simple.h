@@ -302,6 +302,37 @@ namespace simple {
 		size_t focusedComponent = 0;
 		std::vector<std::shared_ptr<component>> components;
 	};
+	class button final : public base::node, public base::component {
+	public:
+		button(std::string name) :
+			name(name)
+		{}
+
+		void init() override {
+			node::width = int(this->name.size()) + 2;
+			node::height = 1;
+		}
+		void render(buffer& buf) override {
+			for (int y = node::dimension.top; y < node::dimension.bottom; ++y)
+				for (int x = node::dimension.left; x < node::dimension.right; ++x)
+					buf.at(y, x).invert = true;
+
+			if (component::focused()) {
+				for (int y = node::dimension.top; y < node::dimension.bottom; ++y)
+					for (int x = node::dimension.left; x < node::dimension.right; ++x)
+						buf.at(y, x).invert = false;
+			}
+
+			buf.at(node::dimension.top, node::dimension.left).value = '[';
+			buf.at(node::dimension.top, node::dimension.right - 1).value = ']';
+			for (int y = node::dimension.top, i = 0; y < node::dimension.bottom; ++y)
+				for (int x = node::dimension.left + 1; x < node::dimension.right - 1; ++x, ++i)
+					buf.at(y, x).value = this->name.at(i);
+		}
+
+	private:
+		std::string name;
+	};
 }
 
 template<class T, class... A>
@@ -343,6 +374,9 @@ std::shared_ptr<simple::base::component> hcontainer(T node, A... args) {
 	((nodes.push_back(std::move(args))), ...);
 
 	return std::make_shared<simple::horizontal_container>(std::move(nodes));
+}
+std::shared_ptr<simple::button> button(std::string name) {
+	return std::make_shared<simple::button>(name);
 }
 
 #endif

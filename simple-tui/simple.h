@@ -1,6 +1,8 @@
 #ifndef _SIMPLE_TUI_
 #define _SIMPLE_TUI_
 
+#include <algorithm>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -123,7 +125,54 @@ namespace simple {
 			int height = 0;
 			rect dimension;
 		};
+
+		class vertical_layout final : public node {
+		public:
+			vertical_layout(std::vector<std::shared_ptr<base::node>> nodes) :
+				nodes(std::move(nodes))
+			{}
+
+			void init() override {
+				for (const auto& node : this->nodes) {
+					node->init();
+
+					node::width = std::max(node::width, node->width);
+					node::height += node->height;
+				}
+			}
+			void set(rect dimension) override {
+				node::set(dimension);
+
+				int top = dimension.top;
+				for (const auto& node : this->nodes) {
+					int left = dimension.left;
+					int right = left + node->width;
+					int bottom = top + node->height;
+
+					node->set({ left, top, right, bottom });
+
+					top = bottom;
+				}
+			}
+			void render(buffer& buf) override {
+				for (const auto& node : this->nodes)
+					node->render(buf);
+			}
+
+		private:
+			std::vector<std::shared_ptr<base::node>> nodes;
+		};
 	}
+}
+
+template<class T, class... A>
+std::shared_ptr<simple::base::node> vlayout(T node, A... args) {
+	std::vector<std::shared_ptr<simple::base::node>> nodes;
+
+	nodes.push_back(std::move(node));
+	((nodes.push_back(std::move(args))), ...);
+
+	return std::make_shared<simple::vertical_layout>(std::move(nodes));
 }
 
 #endif

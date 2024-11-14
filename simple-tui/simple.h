@@ -235,6 +235,40 @@ namespace simple {
 	private:
 		std::string value;
 	};
+
+	class vertical_container final : public base::component {
+	public:
+		vertical_container(std::vector<std::shared_ptr<component>> components) :
+			components(std::move(components))
+		{}
+
+		void focused(bool flag) override {
+			component::focused(flag);
+			this->components.at(this->focusedComponent)->focused(flag);
+		}
+		bool onkey(KEY_EVENT_RECORD key) override {
+			switch (key.wVirtualKeyCode) {
+			case VK_DOWN:
+				if (this->focusedComponent < this->components.size() - 1) {
+					this->components.at(this->focusedComponent)->focused(false);
+					this->components.at(++this->focusedComponent)->focused(true);
+				}
+				return true;
+			case VK_UP:
+				if (this->focusedComponent > 0) {
+					this->components.at(this->focusedComponent)->focused(false);
+					this->components.at(--this->focusedComponent)->focused(true);
+				}
+				return true;
+			}
+
+			return false;
+		}
+
+	private:
+		size_t focusedComponent = 0;
+		std::vector<std::shared_ptr<component>> components;
+	};
 }
 
 template<class T, class... A>

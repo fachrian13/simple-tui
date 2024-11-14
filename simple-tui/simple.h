@@ -100,6 +100,10 @@ namespace simple {
 			return result;
 		}
 
+		void clear() {
+			this->pixels = std::vector<pixel>(this->width * this->height, this->style);
+		}
+
 	private:
 		int width = 0;
 		int height = 0;
@@ -248,6 +252,9 @@ namespace simple {
 			this->components.at(this->focusedComponent)->focused(flag);
 		}
 		bool onkey(KEY_EVENT_RECORD key) override {
+			if (this->components.at(this->focusedComponent)->onkey(key))
+				return true;
+
 			switch (key.wVirtualKeyCode) {
 			case VK_DOWN:
 				if (this->focusedComponent < this->components.size() - 1) {
@@ -281,6 +288,9 @@ namespace simple {
 			this->components.at(this->focusedComponent)->focused(flag);
 		}
 		bool onkey(KEY_EVENT_RECORD key) override {
+			if (this->components.at(this->focusedComponent)->onkey(key))
+				return true;
+
 			switch (key.wVirtualKeyCode) {
 			case VK_RIGHT:
 				if (this->focusedComponent < this->components.size() - 1) {
@@ -372,6 +382,101 @@ namespace simple {
 					}
 				}
 			}
+			else {
+				for (int y = node::dimension.top, i = this->textBegin; y < node::dimension.bottom; ++y)
+					for (int x = node::dimension.left; x < node::dimension.right; ++x, ++i)
+						if (i < this->value.size())
+							buf.at(y, x).value = this->value.at(i);
+			}
+
+		}
+
+		bool onkey(KEY_EVENT_RECORD key) override {
+			switch (key.wVirtualKeyCode) {
+			case VK_RIGHT:
+				if (this->index < this->value.size()) {
+					++this->index;
+
+					if (this->xCursor < this->width - 1)
+						++this->xCursor;
+					else if (this->yCursor < this->height - 1) {
+						++this->yCursor;
+						this->xCursor = 0;
+					}
+					else ++this->textBegin;
+				}
+				return true;
+			case VK_LEFT:
+				if (this->index > 0) {
+					--this->index;
+
+					if (this->xCursor > 0)
+						--this->xCursor;
+					else if (this->yCursor > 0) {
+						--this->yCursor;
+						this->xCursor = this->width - 1;
+					}
+					else --this->textBegin;
+				}
+				return true;
+			case VK_DOWN:
+				if (this->index + node::width <= this->value.size()) {
+					if (this->yCursor < node::height - 1) {
+						++this->yCursor;
+						this->index += node::width;
+					}
+					else {
+						this->index += node::width;
+						this->textBegin += node::width;
+					}
+					return true;
+				}
+				return false;
+			case VK_UP:
+				if (this->index - node::width >= 0) {
+					if (this->yCursor > 0) {
+						--this->yCursor;
+						this->index -= node::width;
+					}
+					else {
+						this->index -= node::width;
+						this->textBegin -= node::width;
+					}
+					return true;
+				}
+				return false;
+			case VK_BACK:
+				if (this->index > 0) {
+					this->value.erase(this->value.begin() + --this->index);
+
+					if (this->xCursor > 0)
+						--this->xCursor;
+					else if (this->yCursor > 0) {
+						--this->yCursor;
+						this->xCursor = this->width - 1;
+					}
+					else --this->textBegin;
+				}
+				return true;
+			}
+
+			if (isprint(key.uChar.AsciiChar)) {
+				this->value.insert(this->value.begin() + this->index++, key.uChar.AsciiChar);
+
+				if (this->xCursor < this->width - 1)
+					++this->xCursor;
+				else if (this->yCursor < this->height - 1) {
+					++this->yCursor;
+					this->xCursor = 0;
+				}
+				else {
+					this->xCursor = 0;
+					this->textBegin += node::width;
+				}
+				return true;
+			}
+
+			return false;
 		}
 
 	private:

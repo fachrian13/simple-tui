@@ -7,11 +7,13 @@ using simple::buffer;
 
 int main() {
 	buffer b = buffer(120, 30);
+	HANDLE hInput = GetStdHandle(STD_INPUT_HANDLE);
 
-	auto iUsername = input("Ucup mirin");
-	auto iPassword = input();
+	auto iUsername = input("Masukkan karakter");
+	iUsername->height = 3;
+	auto iPassword = input("Masukkan karakter");
 	auto bLogin = button("Login");
-	auto bExit = button("Exit");
+	auto bExit = button("Exit", []() { exit(0); });
 	auto vl = vlayout(
 		hlayout(text("Username :"), iUsername),
 		hlayout(text("Password :"), iPassword),
@@ -26,11 +28,21 @@ int main() {
 	);
 	vc->focused(true);
 
+	INPUT_RECORD rec[128];
+	DWORD numberOfEventsRead;
 	while (true) {
+		b.clear();
 		vl->init();
 		vl->set({ 0, 0, vl->width, vl->height });
 		vl->render(b);
+		std::cout << "\x1b[H" << b.toString() << std::flush;
+
+		ReadConsoleInput(hInput, rec, 128, &numberOfEventsRead);
+
+		for (DWORD i = 0; i < numberOfEventsRead; ++i)
+			if (rec[i].EventType == KEY_EVENT && rec[i].Event.KeyEvent.bKeyDown)
+				vc->onkey(rec[i].Event.KeyEvent);
 	}
 
-	std::cout << b.toString() << std::flush;
+	
 }

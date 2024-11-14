@@ -1,10 +1,12 @@
 #ifndef _SIMPLE_TUI_
 #define _SIMPLE_TUI_
+#define NOMINMAX
 
 #include <algorithm>
 #include <memory>
 #include <string>
 #include <vector>
+#include <windows.h>
 
 namespace simple {
 	enum COLOR : int {
@@ -125,6 +127,21 @@ namespace simple {
 			int height = 0;
 			rect dimension;
 		};
+		class component {
+		public:
+			bool focused() {
+				return this->focus;
+			}
+			virtual void focused(bool flag) {
+				this->focus = flag;
+			}
+			virtual bool onkey(KEY_EVENT_RECORD) {
+				return false;
+			}
+
+		private:
+			bool focus = false;
+		};
 	}
 
 	class vertical_layout final : public base::node {
@@ -199,7 +216,7 @@ namespace simple {
 	private:
 		std::vector<std::shared_ptr<base::node>> nodes;
 	};
-	class text final : public base::node{
+	class text final : public base::node {
 	public:
 		text(std::string text) :
 			value(text)

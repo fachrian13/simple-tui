@@ -12,27 +12,29 @@ int main() {
 		text("VERTICAL-1 "),
 		text("VERTICAL-2 "),
 		hlayout(
-			text("HORIZONTAL-1"),
-			text("HORIZONTAL-2"),
+			text("HORIZONTAL-1 "),
+			text("HORIZONTAL-2 "),
 			vlayout(
 				text("VERTICAL-1 "),
 				text("VERTICAL-2 "),
 				hlayout(
-					text("HORIZONTAL-1"),
-					text("HORIZONTAL-2"),
-					text("HORIZONTAL-3"),
-					text("HORIZONTAL-4")
+					text("HORIZONTAL-1 "),
+					text("HORIZONTAL-2 "),
+					text("HORIZONTAL-3 "),
+					text("HORIZONTAL-4 ")
 				),
 				text("VERTICAL-3 "),
 				text("VERTICAL-4 ")
 			),
-			text("HORIZONTAL-3"),
-			text("HORIZONTAL-4")
+			text("HORIZONTAL-3 "),
+			text("HORIZONTAL-4 ")
 		),
 		text("VERTICAL-3 "),
 		text("VERTICAL-4 ")
-	)
-
+	);
+	v->init();
+	v->set({ 0, 0, v->width, v->height });
+	v->render(b);
 
 	std::cout << b.toString() << std::flush;
 }

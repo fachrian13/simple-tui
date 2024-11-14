@@ -3,6 +3,7 @@
 #define NOMINMAX
 
 #include <algorithm>
+#include <functional>
 #include <memory>
 #include <string>
 #include <vector>
@@ -304,8 +305,9 @@ namespace simple {
 	};
 	class button final : public base::node, public base::component {
 	public:
-		button(std::string name) :
-			name(name)
+		button(std::string name, std::function<void()> logic) :
+			name(name),
+			logic(logic)
 		{}
 
 		void init() override {
@@ -313,14 +315,10 @@ namespace simple {
 			node::height = 1;
 		}
 		void render(buffer& buf) override {
-			for (int y = node::dimension.top; y < node::dimension.bottom; ++y)
-				for (int x = node::dimension.left; x < node::dimension.right; ++x)
-					buf.at(y, x).invert = true;
-
 			if (component::focused()) {
 				for (int y = node::dimension.top; y < node::dimension.bottom; ++y)
 					for (int x = node::dimension.left; x < node::dimension.right; ++x)
-						buf.at(y, x).invert = false;
+						buf.at(y, x).invert = true;
 			}
 
 			buf.at(node::dimension.top, node::dimension.left).value = '[';
@@ -330,8 +328,59 @@ namespace simple {
 					buf.at(y, x).value = this->name.at(i);
 		}
 
+		bool onkey(KEY_EVENT_RECORD key) override {
+			switch (key.wVirtualKeyCode) {
+			case VK_RETURN:
+				this->logic();
+				return true;
+			}
+
+			return false;
+		}
+
 	private:
 		std::string name;
+		std::function<void()> logic;
+	};
+	class input final : public base::node, public base::component {
+	public:
+		input(std::string placeholder) :
+			placeholder(placeholder)
+		{}
+
+		void init() override {
+			if (node::width == 0)
+				node::width = 30;
+			if (node::height == 0)
+				node::height = 1;
+		}
+		void render(buffer& buf) override {
+			for (int y = node::dimension.top; y < node::dimension.bottom; ++y)
+				for (int x = node::dimension.left; x < node::dimension.right; ++x)
+					buf.at(y, x).invert = true;
+
+			if (component::focused())
+				buf.at(node::dimension.top + this->yCursor, node::dimension.left + this->xCursor).invert = false;
+
+			if (this->value.empty() && !this->placeholder.empty()) {
+				for (int y = node::dimension.top, i = 0; y < node::dimension.bottom; ++y) {
+					for (int x = node::dimension.left; x < node::dimension.right; ++x, ++i) {
+						if (i < this->placeholder.size()) {
+							buf.at(y, x).italic = true;
+							buf.at(y, x).value = this->placeholder.at(i);
+						}
+					}
+				}
+			}
+		}
+
+	private:
+		std::string value;
+		std::string placeholder;
+		int index = 0;
+		int textBegin = 0;
+		int xCursor = 0;
+		int yCursor = 0;
 	};
 }
 
@@ -375,8 +424,17 @@ std::shared_ptr<simple::base::component> hcontainer(T node, A... args) {
 
 	return std::make_shared<simple::horizontal_container>(std::move(nodes));
 }
+std::shared_ptr<simple::button> button(std::string name, std::function<void()> logic) {
+	return std::make_shared<simple::button>(name, logic);
+}
 std::shared_ptr<simple::button> button(std::string name) {
-	return std::make_shared<simple::button>(name);
+	return std::make_shared<simple::button>(name, []() {});
+}
+std::shared_ptr<simple::input> input(std::string placeholder) {
+	return std::make_shared<simple::input>(placeholder);
+}
+std::shared_ptr<simple::input> input() {
+	return std::make_shared<simple::input>("");
 }
 
 #endif

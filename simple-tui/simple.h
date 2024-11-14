@@ -101,6 +101,13 @@ namespace simple {
 		pixel style;
 		std::vector<pixel> pixels;
 	};
+	class rect final {
+	public:
+		int left = 0;
+		int top = 0;
+		int right = 0;
+		int bottom = 0;
+	};
 }
 
 #endif

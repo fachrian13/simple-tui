@@ -269,6 +269,39 @@ namespace simple {
 		size_t focusedComponent = 0;
 		std::vector<std::shared_ptr<component>> components;
 	};
+	class horizontal_container final : public base::component {
+	public:
+		horizontal_container(std::vector<std::shared_ptr<component>> components) :
+			components(std::move(components))
+		{}
+
+		void focused(bool flag) override {
+			component::focused(flag);
+			this->components.at(this->focusedComponent)->focused(flag);
+		}
+		bool onkey(KEY_EVENT_RECORD key) override {
+			switch (key.wVirtualKeyCode) {
+			case VK_RIGHT:
+				if (this->focusedComponent < this->components.size() - 1) {
+					this->components.at(this->focusedComponent)->focused(false);
+					this->components.at(++this->focusedComponent)->focused(true);
+				}
+				return true;
+			case VK_LEFT:
+				if (this->focusedComponent > 0) {
+					this->components.at(this->focusedComponent)->focused(false);
+					this->components.at(--this->focusedComponent)->focused(true);
+				}
+				return true;
+			}
+
+			return false;
+		}
+
+	private:
+		size_t focusedComponent = 0;
+		std::vector<std::shared_ptr<component>> components;
+	};
 }
 
 template<class T, class... A>
@@ -291,6 +324,25 @@ std::shared_ptr<simple::base::node> hlayout(T node, A... args) {
 }
 std::shared_ptr<simple::base::node> text(std::string value) {
 	return std::make_shared<simple::text>(value);
+}
+
+template<class T, class... A>
+std::shared_ptr<simple::base::component> vcontainer(T node, A... args) {
+	std::vector<std::shared_ptr<simple::base::component>> nodes;
+
+	nodes.push_back(std::move(node));
+	((nodes.push_back(std::move(args))), ...);
+
+	return std::make_shared<simple::vertical_container>(std::move(nodes));
+}
+template<class T, class... A>
+std::shared_ptr<simple::base::component> hcontainer(T node, A... args) {
+	std::vector<std::shared_ptr<simple::base::component>> nodes;
+
+	nodes.push_back(std::move(node));
+	((nodes.push_back(std::move(args))), ...);
+
+	return std::make_shared<simple::horizontal_container>(std::move(nodes));
 }
 
 #endif

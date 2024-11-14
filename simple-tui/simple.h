@@ -125,44 +125,99 @@ namespace simple {
 			int height = 0;
 			rect dimension;
 		};
-
-		class vertical_layout final : public node {
-		public:
-			vertical_layout(std::vector<std::shared_ptr<base::node>> nodes) :
-				nodes(std::move(nodes))
-			{}
-
-			void init() override {
-				for (const auto& node : this->nodes) {
-					node->init();
-
-					node::width = std::max(node::width, node->width);
-					node::height += node->height;
-				}
-			}
-			void set(rect dimension) override {
-				node::set(dimension);
-
-				int top = dimension.top;
-				for (const auto& node : this->nodes) {
-					int left = dimension.left;
-					int right = left + node->width;
-					int bottom = top + node->height;
-
-					node->set({ left, top, right, bottom });
-
-					top = bottom;
-				}
-			}
-			void render(buffer& buf) override {
-				for (const auto& node : this->nodes)
-					node->render(buf);
-			}
-
-		private:
-			std::vector<std::shared_ptr<base::node>> nodes;
-		};
 	}
+
+	class vertical_layout final : public base::node {
+	public:
+		vertical_layout(std::vector<std::shared_ptr<base::node>> nodes) :
+			nodes(std::move(nodes))
+		{}
+
+		void init() override {
+			for (const auto& node : this->nodes) {
+				node->init();
+
+				node::width = std::max(node::width, node->width);
+				node::height += node->height;
+			}
+		}
+		void set(rect dimension) override {
+			node::set(dimension);
+
+			int top = dimension.top;
+			for (const auto& node : this->nodes) {
+				int left = dimension.left;
+				int right = left + node->width;
+				int bottom = top + node->height;
+
+				node->set({ left, top, right, bottom });
+
+				top = bottom;
+			}
+		}
+		void render(buffer& buf) override {
+			for (const auto& node : this->nodes)
+				node->render(buf);
+		}
+
+	private:
+		std::vector<std::shared_ptr<base::node>> nodes;
+	};
+	class horizontal_layout final : public base::node {
+	public:
+		horizontal_layout(std::vector<std::shared_ptr<base::node>> nodes) :
+			nodes(std::move(nodes))
+		{}
+
+		void init() override {
+			for (const auto& node : this->nodes) {
+				node->init();
+
+				node::width += node->width;
+				node::height = std::max(node::height, node->height);
+			}
+		}
+		void set(rect dimension) override {
+			node::set(dimension);
+
+			int left = dimension.left;
+			for (const auto& node : this->nodes) {
+				int top = dimension.top;
+				int right = left + node->width;
+				int bottom = top + node->height;
+
+				node->set({ left, top, right, bottom });
+
+				left = right;
+			}
+		}
+		void render(buffer& buf) override {
+			for (const auto& node : this->nodes)
+				node->render(buf);
+		}
+
+	private:
+		std::vector<std::shared_ptr<base::node>> nodes;
+	};
+	class text final : public base::node{
+	public:
+		text(std::string text) :
+			value(text)
+		{}
+
+		void init() override {
+			node::width = int(this->value.size());
+			node::height = 1;
+		}
+		void render(buffer& buf) override {
+			for (int y = node::dimension.top, i = 0; y < node::dimension.bottom; ++y)
+				for (int x = node::dimension.left; x < node::dimension.right; ++x, ++i)
+					buf.at(y, x).value = this->value.at(i);
+		}
+
+	private:
+		std::string value;
+	};
 }
 
 template<class T, class... A>
@@ -173,6 +228,18 @@ std::shared_ptr<simple::base::node> vlayout(T node, A... args) {
 	((nodes.push_back(std::move(args))), ...);
 
 	return std::make_shared<simple::vertical_layout>(std::move(nodes));
+}
+template<class T, class... A>
+std::shared_ptr<simple::base::node> hlayout(T node, A... args) {
+	std::vector<std::shared_ptr<simple::base::node>> nodes;
+
+	nodes.push_back(std::move(node));
+	((nodes.push_back(std::move(args))), ...);
+
+	return std::make_shared<simple::horizontal_layout>(std::move(nodes));
+}
+std::shared_ptr<simple::base::node> text(std::string value) {
+	return std::make_shared<simple::text>(value);
 }
 
 #endif

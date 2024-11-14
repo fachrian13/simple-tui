@@ -21,6 +21,31 @@ namespace simple {
 		BRIGHT_CYAN = 96,
 		BRIGHT_WHITE = 97
 	};
+	class pixel final {
+	public:
+		pixel(COLOR background, COLOR foreground) :
+			background(background),
+			foreground(foreground)
+		{}
+		pixel(COLOR background, COLOR foreground, char value) :
+			background(background),
+			foreground(foreground),
+			value(value)
+		{}
+
+	public:
+		bool bold = false;
+		bool dim = false;
+		bool italic = false;
+		bool underline = false;
+		bool blink = false;
+		bool invert = false;
+		bool invisible = false;
+		bool strikethrough = false;
+		COLOR background = COLOR::DEFAULT;
+		COLOR foreground = COLOR::DEFAULT;
+		char value = ' ';
+	};
 }
 
 #endif

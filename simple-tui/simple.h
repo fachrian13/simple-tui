@@ -108,6 +108,22 @@ namespace simple {
 		int right = 0;
 		int bottom = 0;
 	};
+
+	namespace base {
+		class node {
+		public:
+			virtual void init() {}
+			virtual void set(rect dimension) {
+				this->dimension = dimension;
+			}
+			virtual void render(buffer&) {}
+
+		public:
+			int width = 0;
+			int height = 0;
+			rect dimension;
+		};
+	}
 }
 
 #endif

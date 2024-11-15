@@ -14,15 +14,42 @@ int main() {
 	auto iPassword = input("Masukkan karakter");
 	auto bLogin = button("Login");
 	auto bExit = button("Exit", []() { exit(0); });
-	auto vl = vlayout(
-		hlayout(text("Username :"), iUsername),
-		hlayout(text("Password :"), iPassword),
-		bLogin,
-		bExit
-	);
+	auto dJurusan = dropdown({
+		"Teknik Mesin",
+		"Teknik Otomotif",
+		"Teknik Listrik",
+		"Teknik Elektronika",
+		"Teknik Komputer dan Jaringan",
+		"Tata Boga",
+		"Tata Busana",
+		"Tata Rias",
+		"Multimedia",
+		"Desain Grafis",
+		"Akuntansi",
+		"Perhotelan dan Pariwisata",
+		"Kesehatan",
+		"Pemasaran",
+		"Teknik Bangunan",
+		"Pariwisata",
+		"Perikanan",
+		"Peternakan",
+		"Agribisnis",
+		"Kimia Industri",
+		"Teknologi Pangan",
+		"Tata Air",
+		"Konstruksi Kapal",
+		"Keamanan Jaringan",
+		"Logistik",
+		"Teknik Audio dan Video",
+		"Teknik Pesawat Udara",
+		"Kebidanan",
+		"Akomodasi Perhotelan",
+		"Farmasi"
+		}, "Silakan Pilih");
 	auto vc = vcontainer(
 		iUsername,
 		iPassword,
+		dJurusan,
 		bLogin,
 		bExit
 	);
@@ -31,6 +58,14 @@ int main() {
 	INPUT_RECORD rec[128];
 	DWORD numberOfEventsRead;
 	while (true) {
+		auto vl = vlayout(
+			hlayout(text("Username :"), iUsername),
+			hlayout(text("Password :"), iPassword),
+			hlayout(text("Jurusan  :"), dJurusan),
+			bLogin,
+			bExit
+		);
+
 		b.clear();
 		vl->init();
 		vl->set({ 0, 0, vl->width, vl->height });

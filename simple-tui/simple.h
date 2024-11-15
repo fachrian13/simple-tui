@@ -379,6 +379,7 @@ namespace simple {
 							buf.at(y, x).italic = true;
 							buf.at(y, x).value = this->placeholder.at(i);
 						}
+						else break;
 					}
 				}
 			}
@@ -387,12 +388,14 @@ namespace simple {
 					for (int x = node::dimension.left; x < node::dimension.right; ++x, ++i)
 						if (i < this->value.size())
 							buf.at(y, x).value = '*';
+						else break;
 			}
 			else {
 				for (int y = node::dimension.top, i = this->textBegin; y < node::dimension.bottom; ++y)
 					for (int x = node::dimension.left; x < node::dimension.right; ++x, ++i)
 						if (i < this->value.size())
 							buf.at(y, x).value = this->value.at(i);
+						else break;
 			}
 		}
 
@@ -490,6 +493,99 @@ namespace simple {
 		int xCursor = 0;
 		int yCursor = 0;
 	};
+	class dropdown final : public base::node, public base::component {
+	public:
+		dropdown(std::vector<std::string> values, std::string placeholder) :
+			values(values),
+			placeholder(placeholder)
+		{}
+
+		void init() override {
+			node::width = int(std::max_element(this->values.begin(), this->values.end(), [](const std::string& a, const std::string& b) { return a.size() < b.size(); })->size());
+			node::height = component::focused() ? std::min(7, int(this->values.size())) : 1;
+		}
+		void render(buffer& buf) override {
+			for (int y = node::dimension.top; y < node::dimension.bottom; ++y)
+				for (int x = node::dimension.left; x < node::dimension.right; ++x)
+					buf.at(y, x).invert = true;
+
+			if (component::focused()) {
+				for (int x = node::dimension.left, i = 0; x < node::dimension.right; ++x, ++i)
+					buf.at(node::dimension.top + this->yCursor, x).invert = false;
+
+				for (int y = node::dimension.top, i = this->textBegin; y < node::dimension.bottom; ++y, ++i)
+					for (int x = node::dimension.left, ii = 0; x < node::dimension.right; ++x, ++ii)
+						if (ii < this->values.at(i).size())
+							buf.at(y, x).value = this->values.at(i).at(ii);
+						else break;
+			}
+			else {
+				if (this->selectedValue.empty() && !this->placeholder.empty()) {
+					for (int y = node::dimension.top, i = 0; y < node::dimension.bottom; ++y) {
+						for (int x = node::dimension.left; x < node::dimension.right; ++x, ++i) {
+							if (i < this->placeholder.size()) {
+								buf.at(y, x).italic = true;
+								buf.at(y, x).value = this->placeholder.at(i);
+							}
+							else break;
+						}
+					}
+				}
+				else {
+					for (int y = node::dimension.top, i = 0; y < node::dimension.bottom; ++y)
+						for (int x = node::dimension.left; x < node::dimension.right; ++x, ++i)
+							if (i < this->selectedValue.size())
+								buf.at(y, x).value = this->selectedValue.at(i);
+							else break;
+				}
+			}
+		}
+
+		bool onkey(KEY_EVENT_RECORD key) override {
+			auto moveCursor = [&](int y) {
+				if (y > 0) {
+					if (this->yCursor < node::height - 1)
+						++this->yCursor;
+					else ++textBegin;
+				}
+				else if (y < 0) {
+					if (this->yCursor > 0)
+						--this->yCursor;
+					else --textBegin;
+				}
+				};
+
+			switch (key.wVirtualKeyCode) {
+			case VK_DOWN:
+				if (this->index < this->values.size() - 1) {
+					++this->index;
+					moveCursor(1);
+					return true;
+				}
+				return false;
+			case VK_UP:
+				if (this->index > 0) {
+					--this->index;
+					moveCursor(-1);
+					return true;
+				}
+				return false;
+			case VK_RETURN:
+				this->selectedValue = this->values.at(this->index);
+				return false;
+			}
+
+			return false;
+		}
+
+	private:
+		std::string selectedValue;
+		std::string placeholder;
+		std::vector<std::string> values;
+		int index = 0;
+		int yCursor = 0;
+		int textBegin = 0;
+	};
 }
 
 template<class T, class... A>
@@ -543,6 +639,12 @@ std::shared_ptr<simple::input> input(std::string placeholder) {
 }
 std::shared_ptr<simple::input> input() {
 	return std::make_shared<simple::input>("");
+}
+std::shared_ptr<simple::dropdown> dropdown(std::vector<std::string> values, std::string placeholder) {
+	return std::make_shared<simple::dropdown>(values, placeholder);
+}
+std::shared_ptr<simple::dropdown> dropdown(std::vector<std::string> values) {
+	return std::make_shared<simple::dropdown>(values, "");
 }
 
 #endif

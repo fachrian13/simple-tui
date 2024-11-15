@@ -46,26 +46,27 @@ int main() {
 		"Akomodasi Perhotelan",
 		"Farmasi"
 		}, "Silakan Pilih");
+	dJurusan->width = 30;
 	auto vc = vcontainer(
 		iUsername,
 		iPassword,
 		dJurusan,
-		bLogin,
-		bExit
+		hcontainer(
+			bLogin,
+			bExit
+		)
 	);
 	vc->focused(true);
 
 	INPUT_RECORD rec[128];
 	DWORD numberOfEventsRead;
+	auto vl = vlayout(
+		hlayout(text("Username :"), iUsername),
+		hlayout(text("Password :"), iPassword),
+		hlayout(text("Jurusan  :"), dJurusan),
+		hlayout(bLogin, bExit)
+	);
 	while (true) {
-		auto vl = vlayout(
-			hlayout(text("Username :"), iUsername),
-			hlayout(text("Password :"), iPassword),
-			hlayout(text("Jurusan  :"), dJurusan),
-			bLogin,
-			bExit
-		);
-
 		b.clear();
 		vl->init();
 		vl->set({ 0, 0, vl->width, vl->height });

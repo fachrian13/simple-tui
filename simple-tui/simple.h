@@ -35,12 +35,14 @@ namespace simple {
 		pixel(COLOR background, COLOR foreground) :
 			background(background),
 			foreground(foreground)
-		{}
+		{
+		}
 		pixel(COLOR background, COLOR foreground, char value) :
 			background(background),
 			foreground(foreground),
 			value(value)
-		{}
+		{
+		}
 
 	public:
 		bool bold = false;
@@ -61,13 +63,15 @@ namespace simple {
 			width(width),
 			height(height),
 			pixels(width* height)
-		{}
+		{
+		}
 		buffer(int width, int height, pixel style) :
 			width(width),
 			height(height),
 			style(style),
 			pixels(width* height, style)
-		{}
+		{
+		}
 
 		pixel& at(size_t y, size_t x) {
 			return this->pixels.at(y * this->width + x);
@@ -153,7 +157,8 @@ namespace simple {
 	public:
 		vertical_layout(std::vector<std::shared_ptr<base::node>> nodes) :
 			nodes(std::move(nodes))
-		{}
+		{
+		}
 
 		void init() override {
 			for (const auto& node : this->nodes) {
@@ -189,7 +194,8 @@ namespace simple {
 	public:
 		horizontal_layout(std::vector<std::shared_ptr<base::node>> nodes) :
 			nodes(std::move(nodes))
-		{}
+		{
+		}
 
 		void init() override {
 			for (const auto& node : this->nodes) {
@@ -225,7 +231,8 @@ namespace simple {
 	public:
 		text(std::string text) :
 			value(text)
-		{}
+		{
+		}
 
 		void init() override {
 			node::width = int(this->value.size());
@@ -245,7 +252,8 @@ namespace simple {
 	public:
 		vertical_container(std::vector<std::shared_ptr<component>> components) :
 			components(std::move(components))
-		{}
+		{
+		}
 
 		void focused(bool flag) override {
 			component::focused(flag);
@@ -258,14 +266,14 @@ namespace simple {
 			switch (key.wVirtualKeyCode) {
 			case VK_DOWN:
 				if (this->focusedComponent < this->components.size() - 1) {
-					this->components.at(this->focusedComponent)->focused(false);
-					this->components.at(++this->focusedComponent)->focused(true);
+					this->components.at(this->focusedComponent++)->focused(false);
+					this->components.at(this->focusedComponent)->focused(true);
 				}
 				return true;
 			case VK_UP:
 				if (this->focusedComponent > 0) {
-					this->components.at(this->focusedComponent)->focused(false);
-					this->components.at(--this->focusedComponent)->focused(true);
+					this->components.at(this->focusedComponent--)->focused(false);
+					this->components.at(this->focusedComponent)->focused(true);
 				}
 				return true;
 			}
@@ -281,7 +289,8 @@ namespace simple {
 	public:
 		horizontal_container(std::vector<std::shared_ptr<component>> components) :
 			components(std::move(components))
-		{}
+		{
+		}
 
 		void focused(bool flag) override {
 			component::focused(flag);
@@ -318,10 +327,11 @@ namespace simple {
 		button(std::string name, std::function<void()> logic) :
 			name(name),
 			logic(logic)
-		{}
+		{
+		}
 
 		void init() override {
-			node::width = int(this->name.size()) + 2;
+			node::width = int(this->name.size()) + 4;
 			node::height = 1;
 		}
 		void render(buffer& buf) override {
@@ -334,7 +344,7 @@ namespace simple {
 			buf.at(node::dimension.top, node::dimension.left).value = '[';
 			buf.at(node::dimension.top, node::dimension.right - 1).value = ']';
 			for (int y = node::dimension.top, i = 0; y < node::dimension.bottom; ++y)
-				for (int x = node::dimension.left + 1; x < node::dimension.right - 1; ++x, ++i)
+				for (int x = node::dimension.left + 2; x < node::dimension.right - 2; ++x, ++i)
 					buf.at(y, x).value = this->name.at(i);
 		}
 
@@ -356,7 +366,8 @@ namespace simple {
 	public:
 		input(std::string placeholder) :
 			placeholder(placeholder)
-		{}
+		{
+		}
 
 		void init() override {
 			if (node::width == 0)
@@ -498,10 +509,12 @@ namespace simple {
 		dropdown(std::vector<std::string> values, std::string placeholder) :
 			values(values),
 			placeholder(placeholder)
-		{}
+		{
+		}
 
 		void init() override {
-			node::width = int(std::max_element(this->values.begin(), this->values.end(), [](const std::string& a, const std::string& b) { return a.size() < b.size(); })->size());
+			if (node::width == 0)
+				node::width = int(std::max_element(this->values.begin(), this->values.end(), [](const std::string& a, const std::string& b) { return a.size() < b.size(); })->size());
 			node::height = component::focused() ? std::min(7, int(this->values.size())) : 1;
 		}
 		void render(buffer& buf) override {

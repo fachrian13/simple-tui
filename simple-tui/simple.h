@@ -382,13 +382,18 @@ namespace simple {
 					}
 				}
 			}
+			else if (this->password) {
+				for (int y = node::dimension.top, i = this->textBegin; y < node::dimension.bottom; ++y)
+					for (int x = node::dimension.left; x < node::dimension.right; ++x, ++i)
+						if (i < this->value.size())
+							buf.at(y, x).value = '*';
+			}
 			else {
 				for (int y = node::dimension.top, i = this->textBegin; y < node::dimension.bottom; ++y)
 					for (int x = node::dimension.left; x < node::dimension.right; ++x, ++i)
 						if (i < this->value.size())
 							buf.at(y, x).value = this->value.at(i);
 			}
-
 		}
 
 		bool onkey(KEY_EVENT_RECORD key) override {
@@ -428,7 +433,7 @@ namespace simple {
 						--this->yCursor;
 					else this->textBegin -= node::width;
 				}
-			};
+				};
 
 			switch (key.wVirtualKeyCode) {
 			case VK_LEFT:
@@ -473,6 +478,9 @@ namespace simple {
 
 			return false;
 		}
+
+	public:
+		bool password = false;
 
 	private:
 		std::string value;

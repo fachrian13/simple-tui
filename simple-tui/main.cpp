@@ -43,6 +43,4 @@ int main() {
 			if (rec[i].EventType == KEY_EVENT && rec[i].Event.KeyEvent.bKeyDown)
 				vc->onkey(rec[i].Event.KeyEvent);
 	}
-
-	
 }

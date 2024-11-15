@@ -392,86 +392,81 @@ namespace simple {
 		}
 
 		bool onkey(KEY_EVENT_RECORD key) override {
-			switch (key.wVirtualKeyCode) {
-			case VK_RIGHT:
-				if (this->index < this->value.size()) {
-					++this->index;
-
-					if (this->xCursor < this->width - 1)
+			auto moveCursor = [&](int y, int x) {
+				if (x > 0) {
+					if (this->xCursor < node::width - 1)
 						++this->xCursor;
-					else if (this->yCursor < this->height - 1) {
-						++this->yCursor;
+					else if (this->yCursor < node::height - 1) {
 						this->xCursor = 0;
+						++this->yCursor;
 					}
-					else ++this->textBegin;
+					else {
+						this->xCursor = 0;
+						this->textBegin += node::width;
+					}
 				}
-				return true;
-			case VK_LEFT:
-				if (this->index > 0) {
-					--this->index;
-
+				else if (x < 0) {
 					if (this->xCursor > 0)
 						--this->xCursor;
 					else if (this->yCursor > 0) {
+						this->xCursor = node::width - 1;
 						--this->yCursor;
-						this->xCursor = this->width - 1;
 					}
-					else --this->textBegin;
+					else {
+						this->xCursor = node::width - 1;
+						this->textBegin -= node::width;
+					}
+				}
+
+				if (y > 0) {
+					if (this->yCursor < node::height - 1)
+						++this->yCursor;
+					else this->textBegin += node::width;
+				}
+				else if (y < 0) {
+					if (this->yCursor > 0)
+						--this->yCursor;
+					else this->textBegin -= node::width;
+				}
+			};
+
+			switch (key.wVirtualKeyCode) {
+			case VK_LEFT:
+				if (this->index > 0) {
+					--this->index;
+					moveCursor(0, -1);
+				}
+				return true;
+			case VK_UP:
+				if (this->index - node::width > 0) {
+					this->index -= node::width;
+					moveCursor(-1, 0);
+					return true;
+				}
+				return false;
+			case VK_RIGHT:
+				if (this->index < this->value.size()) {
+					++this->index;
+					moveCursor(0, 1);
 				}
 				return true;
 			case VK_DOWN:
 				if (this->index + node::width <= this->value.size()) {
-					if (this->yCursor < node::height - 1) {
-						++this->yCursor;
-						this->index += node::width;
-					}
-					else {
-						this->index += node::width;
-						this->textBegin += node::width;
-					}
-					return true;
-				}
-				return false;
-			case VK_UP:
-				if (this->index - node::width >= 0) {
-					if (this->yCursor > 0) {
-						--this->yCursor;
-						this->index -= node::width;
-					}
-					else {
-						this->index -= node::width;
-						this->textBegin -= node::width;
-					}
+					this->index += node::width;
+					moveCursor(1, 0);
 					return true;
 				}
 				return false;
 			case VK_BACK:
 				if (this->index > 0) {
 					this->value.erase(this->value.begin() + --this->index);
-
-					if (this->xCursor > 0)
-						--this->xCursor;
-					else if (this->yCursor > 0) {
-						--this->yCursor;
-						this->xCursor = this->width - 1;
-					}
-					else --this->textBegin;
+					moveCursor(0, -1);
 				}
 				return true;
-			}
-
-			if (isprint(key.uChar.AsciiChar)) {
-				this->value.insert(this->value.begin() + this->index++, key.uChar.AsciiChar);
-
-				if (this->xCursor < this->width - 1)
-					++this->xCursor;
-				else if (this->yCursor < this->height - 1) {
-					++this->yCursor;
-					this->xCursor = 0;
-				}
-				else {
-					this->xCursor = 0;
-					this->textBegin += node::width;
+			default:
+				if (isprint(key.uChar.AsciiChar)) {
+					value.insert(value.begin() + index++, key.uChar.AsciiChar);
+					moveCursor(0, 1);
 				}
 				return true;
 			}

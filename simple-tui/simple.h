@@ -136,6 +136,25 @@ namespace simple {
 			int height = 0;
 			rect dimension;
 		};
+		class node_style : public node {
+		public:
+			node_style(std::shared_ptr<node> other) :
+				other(std::move(other))
+			{}
+
+			virtual void init() override {
+				this->other->init();
+			}
+			virtual void set(rect dimension) override {
+				this->other->set(dimension);
+			}
+			virtual void render(buffer& buf) override {
+				this->other->render(buf);
+			}
+
+		protected:
+			std::shared_ptr<node> other;
+		};
 		class component {
 		public:
 			bool focused() {
@@ -248,6 +267,48 @@ namespace simple {
 		std::string value;
 	};
 
+	class border final : public base::node_style {
+	public:
+		border(std::shared_ptr<node> node) :
+			node_style(std::move(node))
+		{}
+
+		void init() override {
+			node_style::init();
+
+			node::width = node_style::other->width + 2;
+			node::height = node_style::other->height + 2;
+		}
+		void set(rect dimension) override {
+			node::set(dimension);
+
+			rect dim = node::dimension;
+			dim.left += 1;
+			dim.top += 1;
+			dim.right -= 1;
+			dim.bottom -= 1;
+			node_style::set(dim);
+		}
+		void render(buffer& buf) override {
+			node_style::render(buf);
+
+			buf.at(node::dimension.top, node::dimension.left).value = '+';
+			buf.at(node::dimension.top, node::dimension.right - 1).value = '+';
+			buf.at(node::dimension.bottom - 1, node::dimension.left).value = '+';
+			buf.at(node::dimension.bottom - 1, node::dimension.right - 1).value = '+';
+
+			for (int x = node::dimension.left + 1; x < node::dimension.right - 1; x++) {
+				buf.at(node::dimension.top, x).value = '-';
+				buf.at(node::dimension.bottom - 1, x).value = '-';
+			}
+
+			for (int y = node::dimension.top + 1; y < node::dimension.bottom - 1; ++y) {
+				buf.at(y, node::dimension.left).value = '|';
+				buf.at(y, node::dimension.right - 1).value = '|';
+			}
+		}
+	};
+
 	class vertical_container final : public base::component {
 	public:
 		vertical_container(std::vector<std::shared_ptr<component>> components) :
@@ -260,6 +321,21 @@ namespace simple {
 			this->components.at(this->focusedComponent)->focused(flag);
 		}
 		bool onkey(KEY_EVENT_RECORD key) override {
+			switch (key.wVirtualKeyCode) {
+			case VK_TAB:
+				if (key.dwControlKeyState & SHIFT_PRESSED) {
+					if (this->focusedComponent > 0) {
+						this->components.at(this->focusedComponent--)->focused(false);
+						this->components.at(this->focusedComponent)->focused(true);
+					}
+				}
+				else if (this->focusedComponent < this->components.size() - 1) {
+					this->components.at(this->focusedComponent++)->focused(false);
+					this->components.at(this->focusedComponent)->focused(true);
+				}
+				return true;
+			}
+
 			if (this->components.at(this->focusedComponent)->onkey(key))
 				return true;
 
@@ -297,6 +373,21 @@ namespace simple {
 			this->components.at(this->focusedComponent)->focused(flag);
 		}
 		bool onkey(KEY_EVENT_RECORD key) override {
+			switch (key.wVirtualKeyCode) {
+			case VK_TAB:
+				if (key.dwControlKeyState & SHIFT_PRESSED) {
+					if (this->focusedComponent > 0) {
+						this->components.at(this->focusedComponent--)->focused(false);
+						this->components.at(this->focusedComponent)->focused(true);
+					}
+				}
+				else if (this->focusedComponent < this->components.size() - 1) {
+					this->components.at(this->focusedComponent++)->focused(false);
+					this->components.at(this->focusedComponent)->focused(true);
+				}
+				return true;
+			}
+
 			if (this->components.at(this->focusedComponent)->onkey(key))
 				return true;
 
@@ -394,7 +485,7 @@ namespace simple {
 					}
 				}
 			}
-			else if (this->password) {
+			else if (this->hide) {
 				for (int y = node::dimension.top, i = this->textBegin; y < node::dimension.bottom; ++y)
 					for (int x = node::dimension.left; x < node::dimension.right; ++x, ++i)
 						if (i < this->value.size())
@@ -494,7 +585,7 @@ namespace simple {
 		}
 
 	public:
-		bool password = false;
+		bool hide = false;
 
 	private:
 		std::string value;
@@ -586,6 +677,23 @@ namespace simple {
 			case VK_RETURN:
 				this->selectedValue = this->values.at(this->index);
 				return false;
+			default:
+				switch (key.uChar.AsciiChar) {
+				case 'j':
+					if (this->index < this->values.size() - 1) {
+						++this->index;
+						moveCursor(1);
+						return true;
+					}
+					return false;
+				case 'k':
+					if (this->index > 0) {
+						--this->index;
+						moveCursor(-1);
+						return true;
+					}
+					return false;
+				}
 			}
 
 			return false;
@@ -599,6 +707,13 @@ namespace simple {
 		int yCursor = 0;
 		int textBegin = 0;
 	};
+}
+
+std::shared_ptr<simple::base::node> operator |(
+	std::shared_ptr<simple::base::node> left,
+	std::function<std::shared_ptr<simple::base::node>(std::shared_ptr<simple::base::node>)> nodeStyle
+	) {
+	return nodeStyle(std::move(left));
 }
 
 template<class T, class... A>
@@ -621,6 +736,10 @@ std::shared_ptr<simple::base::node> hlayout(T node, A... args) {
 }
 std::shared_ptr<simple::base::node> text(std::string value) {
 	return std::make_shared<simple::text>(value);
+}
+
+std::shared_ptr<simple::base::node> border(std::shared_ptr<simple::base::node> node) {
+	return std::make_shared<simple::border>(std::move(node));
 }
 
 template<class T, class... A>

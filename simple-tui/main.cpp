@@ -6,14 +6,16 @@ using simple::pixel;
 using simple::buffer;
 
 int main() {
-	buffer b = buffer(120, 30);
+	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
 	HANDLE hInput = GetStdHandle(STD_INPUT_HANDLE);
+	CONSOLE_SCREEN_BUFFER_INFO csbi;
+	GetConsoleScreenBufferInfo(hOut, &csbi);
 
-	auto iUsername = input("Masukkan karakter");
-	iUsername->height = 3;
-	auto iPassword = input("Masukkan karakter");
-	auto bLogin = button("Login");
-	auto bExit = button("Exit", []() { exit(0); });
+	buffer b = buffer(csbi.dwSize.X, csbi.dwSize.Y);
+	auto iNamaLengkap = input("Ucup Mirin");
+	auto iAlamat = input("JL...");
+	iAlamat->height = 3;
+	auto iTempatLahir = input();
 	auto dJurusan = dropdown({
 		"Teknik Mesin",
 		"Teknik Otomotif",
@@ -47,26 +49,31 @@ int main() {
 		"Farmasi"
 		}, "Silakan Pilih");
 	dJurusan->width = 30;
+	auto bLogin = button("Login");
+	auto bExit = button("Exit", []() { exit(0); });
+
 	auto vc = vcontainer(
-		iUsername,
-		iPassword,
+		iNamaLengkap,
+		iAlamat,
+		iTempatLahir,
 		dJurusan,
-		hcontainer(
-			bLogin,
-			bExit
-		)
+		bLogin,
+		bExit
 	);
 	vc->focused(true);
 
 	INPUT_RECORD rec[128];
 	DWORD numberOfEventsRead;
-	auto vl = vlayout(
-		hlayout(text("Username :"), iUsername),
-		hlayout(text("Password :"), iPassword),
-		hlayout(text("Jurusan  :"), dJurusan),
-		hlayout(bLogin, bExit)
-	);
+	std::cout << "\x1b[?25l" << std::flush;
 	while (true) {
+		auto vl = vlayout(
+			hlayout(text("Nama Lengkap :"), iNamaLengkap),
+			hlayout(text("Alamat       :"), iAlamat),
+			hlayout(text("Tempat Lahir :"), iTempatLahir),
+			hlayout(text("Jurusan      :"), dJurusan),
+			bLogin,
+			bExit
+		) | border;
 		b.clear();
 		vl->init();
 		vl->set({ 0, 0, vl->width, vl->height });

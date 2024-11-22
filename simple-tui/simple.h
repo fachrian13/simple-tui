@@ -103,6 +103,12 @@ namespace simple {
 
 			return result;
 		}
+		int getWidth() {
+			return this->width;
+		}
+		int getHeight() {
+			return this->height;
+		}
 
 		void clear() {
 			this->pixels = std::vector<pixel>(this->width * this->height, this->style);
@@ -140,7 +146,8 @@ namespace simple {
 		public:
 			node_style(std::shared_ptr<node> other) :
 				other(std::move(other))
-			{}
+			{
+			}
 
 			virtual void init() override {
 				this->other->init();
@@ -271,7 +278,8 @@ namespace simple {
 	public:
 		border(std::shared_ptr<node> node) :
 			node_style(std::move(node))
-		{}
+		{
+		}
 
 		void init() override {
 			node_style::init();
@@ -339,14 +347,15 @@ namespace simple {
 			if (this->components.at(this->focusedComponent)->onkey(key))
 				return true;
 
-			switch (key.wVirtualKeyCode) {
-			case VK_DOWN:
+			if (key.wVirtualKeyCode == VK_DOWN || key.uChar.AsciiChar == 'j') {
+
 				if (this->focusedComponent < this->components.size() - 1) {
 					this->components.at(this->focusedComponent++)->focused(false);
 					this->components.at(this->focusedComponent)->focused(true);
 				}
 				return true;
-			case VK_UP:
+			}
+			else if (key.wVirtualKeyCode == VK_UP || key.uChar.AsciiChar == 'k') {
 				if (this->focusedComponent > 0) {
 					this->components.at(this->focusedComponent--)->focused(false);
 					this->components.at(this->focusedComponent)->focused(true);
@@ -391,17 +400,18 @@ namespace simple {
 			if (this->components.at(this->focusedComponent)->onkey(key))
 				return true;
 
-			switch (key.wVirtualKeyCode) {
-			case VK_RIGHT:
+			if (key.wVirtualKeyCode == VK_RIGHT || key.uChar.AsciiChar == 'l') {
+
 				if (this->focusedComponent < this->components.size() - 1) {
-					this->components.at(this->focusedComponent)->focused(false);
-					this->components.at(++this->focusedComponent)->focused(true);
+					this->components.at(this->focusedComponent++)->focused(false);
+					this->components.at(this->focusedComponent)->focused(true);
 				}
 				return true;
-			case VK_LEFT:
+			}
+			else if (key.wVirtualKeyCode == VK_LEFT || key.uChar.AsciiChar == 'h') {
 				if (this->focusedComponent > 0) {
-					this->components.at(this->focusedComponent)->focused(false);
-					this->components.at(--this->focusedComponent)->focused(true);
+					this->components.at(this->focusedComponent--)->focused(false);
+					this->components.at(this->focusedComponent)->focused(true);
 				}
 				return true;
 			}

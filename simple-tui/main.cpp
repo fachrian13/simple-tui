@@ -12,6 +12,7 @@ int main() {
 	GetConsoleScreenBufferInfo(hOut, &csbi);
 
 	buffer b = buffer(csbi.dwSize.X, csbi.dwSize.Y);
+
 	auto iNamaLengkap = input("Ucup Mirin");
 	auto iAlamat = input("JL...");
 	iAlamat->height = 3;
@@ -76,7 +77,9 @@ int main() {
 		) | border;
 		b.clear();
 		vl->init();
-		vl->set({ 0, 0, vl->width, vl->height });
+		int x = (b.getWidth() - vl->width) / 2;
+		int y = (b.getHeight() - vl->height) / 2;
+		vl->set({ x, y, x + vl->width, y + vl->height });
 		vl->render(b);
 		std::cout << "\x1b[H" << b.toString() << std::flush;
 

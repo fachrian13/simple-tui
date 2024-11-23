@@ -469,6 +469,9 @@ namespace simple {
 			placeholder(placeholder)
 		{
 		}
+		const std::string getValue() {
+			return this->value;
+		}
 
 		void init() override {
 			if (node::width == 0)
@@ -584,7 +587,7 @@ namespace simple {
 				}
 				return true;
 			default:
-				if (isprint(key.uChar.AsciiChar)) {
+				if (this->pattern(key.uChar.AsciiChar) && this->index < this->limit) {
 					value.insert(value.begin() + index++, key.uChar.AsciiChar);
 					moveCursor(0, 1);
 				}
@@ -596,6 +599,8 @@ namespace simple {
 
 	public:
 		bool hide = false;
+		int limit = std::numeric_limits<int>::max();
+		std::function<bool(int)> pattern = [](int ch) { return ch > 0x1F && ch < 0x7F; };
 
 	private:
 		std::string value;

@@ -144,23 +144,23 @@ namespace simple {
 		};
 		class node_style : public node {
 		public:
-			node_style(std::shared_ptr<node> other) :
-				other(std::move(other))
+			node_style(std::shared_ptr<node> target) :
+				target(std::move(target))
 			{
 			}
 
 			virtual void init() override {
-				this->other->init();
+				this->target->init();
 			}
 			virtual void set(rect dimension) override {
-				this->other->set(dimension);
+				this->target->set(dimension);
 			}
 			virtual void render(buffer& buf) override {
-				this->other->render(buf);
+				this->target->render(buf);
 			}
 
 		protected:
-			std::shared_ptr<node> other;
+			std::shared_ptr<node> target;
 		};
 		class component {
 		public:
@@ -284,8 +284,8 @@ namespace simple {
 		void init() override {
 			node_style::init();
 
-			node::width = node_style::other->width + 2;
-			node::height = node_style::other->height + 2;
+			node::width = node_style::target->width + 2;
+			node::height = node_style::target->height + 2;
 		}
 		void set(rect dimension) override {
 			node::set(dimension);
@@ -316,6 +316,35 @@ namespace simple {
 			}
 		}
 	};
+	class background final : public base::node_style {
+	public:
+		background(std::shared_ptr<node> node, COLOR color) :
+			node_style(std::move(node)),
+			color(color)
+		{
+		}
+
+		void init() override {
+			node_style::init();
+
+			node::width = node_style::target->width;
+			node::height = node_style::target->height;
+		}
+		void set(rect dimension) override {
+			node::set(dimension);
+			node_style::set(dimension);
+		}
+		void render(buffer& buf) override {
+			node_style::render(buf);
+
+			for (int y = node::dimension.top; y < node::dimension.bottom; ++y)
+				for (int x = node::dimension.left; x < node::dimension.right; ++x)
+					buf.at(y, x).background = this->color;
+		}
+
+	private:
+		COLOR color = COLOR::DEFAULT;
+	};
 
 	class vertical_container final : public base::component {
 	public:
@@ -329,42 +358,39 @@ namespace simple {
 			this->components.at(this->focusedComponent)->focused(flag);
 		}
 		bool onkey(KEY_EVENT_RECORD key) override {
-			switch (key.wVirtualKeyCode) {
-			case VK_TAB:
-				if (key.dwControlKeyState & SHIFT_PRESSED) {
-					if (this->focusedComponent > 0) {
-						this->components.at(this->focusedComponent--)->focused(false);
-						this->components.at(this->focusedComponent)->focused(true);
+			auto& focused = this->components.at(this->focusedComponent);
+
+			if (focused->onkey(key))
+				return true;
+
+			if ((key.dwControlKeyState & SHIFT_PRESSED) && key.wVirtualKeyCode == VK_TAB) {
+				if (this->focusedComponent > 0) {
+					focused->focused(false);
+					this->components.at(--this->focusedComponent)->focused(true);
+					return true;
+				}
+			}
+			else {
+				if (key.wVirtualKeyCode == VK_DOWN || key.wVirtualKeyCode == VK_TAB || key.uChar.AsciiChar == 'j') {
+					if (this->focusedComponent < this->components.size() - 1) {
+						focused->focused(false);
+						this->components.at(++this->focusedComponent)->focused(true);
+						return true;
 					}
 				}
-				else if (this->focusedComponent < this->components.size() - 1) {
-					this->components.at(this->focusedComponent++)->focused(false);
-					this->components.at(this->focusedComponent)->focused(true);
-				}
-				return true;
-			}
 
-			if (this->components.at(this->focusedComponent)->onkey(key))
-				return true;
-
-			if (key.wVirtualKeyCode == VK_DOWN || key.uChar.AsciiChar == 'j') {
-
-				if (this->focusedComponent < this->components.size() - 1) {
-					this->components.at(this->focusedComponent++)->focused(false);
-					this->components.at(this->focusedComponent)->focused(true);
+				if (key.wVirtualKeyCode == VK_UP || key.uChar.AsciiChar == 'k') {
+					if (this->focusedComponent > 0) {
+						focused->focused(false);
+						this->components.at(--this->focusedComponent)->focused(true);
+						return true;
+					}
 				}
-				return true;
-			}
-			else if (key.wVirtualKeyCode == VK_UP || key.uChar.AsciiChar == 'k') {
-				if (this->focusedComponent > 0) {
-					this->components.at(this->focusedComponent--)->focused(false);
-					this->components.at(this->focusedComponent)->focused(true);
-				}
-				return true;
 			}
 
 			return false;
 		}
+
 
 	private:
 		size_t focusedComponent = 0;
@@ -382,42 +408,39 @@ namespace simple {
 			this->components.at(this->focusedComponent)->focused(flag);
 		}
 		bool onkey(KEY_EVENT_RECORD key) override {
-			switch (key.wVirtualKeyCode) {
-			case VK_TAB:
-				if (key.dwControlKeyState & SHIFT_PRESSED) {
-					if (this->focusedComponent > 0) {
-						this->components.at(this->focusedComponent--)->focused(false);
-						this->components.at(this->focusedComponent)->focused(true);
+			auto& focused = this->components.at(this->focusedComponent);
+
+			if (focused->onkey(key))
+				return true;
+
+			if ((key.dwControlKeyState & SHIFT_PRESSED) && key.wVirtualKeyCode == VK_TAB) {
+				if (this->focusedComponent > 0) {
+					focused->focused(false);
+					this->components.at(--this->focusedComponent)->focused(true);
+					return true;
+				}
+			}
+			else {
+				if (key.wVirtualKeyCode == VK_RIGHT || key.wVirtualKeyCode == VK_TAB || key.uChar.AsciiChar == 'l') {
+					if (this->focusedComponent < this->components.size() - 1) {
+						focused->focused(false);
+						this->components.at(++this->focusedComponent)->focused(true);
+						return true;
 					}
 				}
-				else if (this->focusedComponent < this->components.size() - 1) {
-					this->components.at(this->focusedComponent++)->focused(false);
-					this->components.at(this->focusedComponent)->focused(true);
-				}
-				return true;
-			}
 
-			if (this->components.at(this->focusedComponent)->onkey(key))
-				return true;
-
-			if (key.wVirtualKeyCode == VK_RIGHT || key.uChar.AsciiChar == 'l') {
-
-				if (this->focusedComponent < this->components.size() - 1) {
-					this->components.at(this->focusedComponent++)->focused(false);
-					this->components.at(this->focusedComponent)->focused(true);
+				if (key.wVirtualKeyCode == VK_LEFT || key.uChar.AsciiChar == 'h') {
+					if (this->focusedComponent > 0) {
+						focused->focused(false);
+						this->components.at(--this->focusedComponent)->focused(true);
+						return true;
+					}
 				}
-				return true;
-			}
-			else if (key.wVirtualKeyCode == VK_LEFT || key.uChar.AsciiChar == 'h') {
-				if (this->focusedComponent > 0) {
-					this->components.at(this->focusedComponent--)->focused(false);
-					this->components.at(this->focusedComponent)->focused(true);
-				}
-				return true;
 			}
 
 			return false;
 		}
+
 
 	private:
 		size_t focusedComponent = 0;
@@ -558,40 +581,43 @@ namespace simple {
 				if (this->index > 0) {
 					--this->index;
 					moveCursor(0, -1);
+					return true;
 				}
-				return true;
+				break;
 			case VK_UP:
 				if (this->index - node::width > 0) {
 					this->index -= node::width;
 					moveCursor(-1, 0);
 					return true;
 				}
-				return false;
+				break;
 			case VK_RIGHT:
 				if (this->index < this->value.size()) {
 					++this->index;
 					moveCursor(0, 1);
+					return true;
 				}
-				return true;
+				break;
 			case VK_DOWN:
 				if (this->index + node::width <= this->value.size()) {
 					this->index += node::width;
 					moveCursor(1, 0);
 					return true;
 				}
-				return false;
+				break;
 			case VK_BACK:
 				if (this->index > 0) {
 					this->value.erase(this->value.begin() + --this->index);
 					moveCursor(0, -1);
+					return true;
 				}
-				return true;
+				break;
 			default:
 				if (this->pattern(key.uChar.AsciiChar) && this->index < this->limit) {
 					value.insert(value.begin() + index++, key.uChar.AsciiChar);
 					moveCursor(0, 1);
+					return true;
 				}
-				return true;
 			}
 
 			return false;
@@ -753,10 +779,15 @@ std::shared_ptr<simple::base::node> text(std::string value) {
 	return std::make_shared<simple::text>(value);
 }
 
-std::shared_ptr<simple::base::node> border(std::shared_ptr<simple::base::node> node) {
-	return std::make_shared<simple::border>(std::move(node));
+std::shared_ptr<simple::base::node> border(std::shared_ptr<simple::base::node> target) {
+	return std::make_shared<simple::border>(std::move(target));
 }
-
+std::shared_ptr<simple::base::node> background(std::shared_ptr<simple::base::node> target, simple::COLOR color) {
+	return std::make_shared<simple::background>(std::move(target), color);
+}
+std::function<std::shared_ptr<simple::base::node>(std::shared_ptr<simple::base::node>)> background(simple::COLOR color) {
+	return [color](std::shared_ptr<simple::base::node> node) { return background(std::move(node), color); };
+}
 template<class T, class... A>
 std::shared_ptr<simple::base::component> vcontainer(T node, A... args) {
 	std::vector<std::shared_ptr<simple::base::component>> nodes;

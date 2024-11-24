@@ -14,41 +14,77 @@ COORD fullscreen() {
 	return csbi.dwSize;
 }
 
+void render(buffer& b, std::shared_ptr<simple::base::node> node) {
+	node->init();
+	int x = (b.getWidth() - node->width) / 2;
+	int y = (b.getHeight() - node->height) / 2;
+	node->set({ x, y, x + node->width, y + node->height });
+	b.clear();
+	node->render(b);
+	std::cout << b.toString() << "\x1b[H" << std::flush;
+}
+
 int main() {
 	COORD size = fullscreen();
 	buffer b = buffer(size.X, size.Y);
+	bool loop = true;
 
-	auto iUsername = input("John Doe");
-	iUsername->limit = 8;
-	iUsername->pattern = isalnum;
-	auto iPassword = input();
-	iPassword->hide = true;
-	auto bLogin = button("Login");
-	auto bExit = button("Exit", []() { exit(0); });
+	auto iNamaDepan = input("Nama Depan");
+	iNamaDepan->width = 14;
+	auto iNamaBelakang = input("Nama Belakang");
+	iNamaBelakang->width = 15;
+	auto iEmail = input("your@mail.id");
+	auto iNomorTelepon = input("08***");
+	iNomorTelepon->pattern = isdigit;
+	iNomorTelepon->limit = 13;
+	auto iAlamat = input();
+	iAlamat->height = 3;
+	auto iTanggal = input("Tanggal");
+	iTanggal->width = 9;
+	iTanggal->limit = 2;
+	iTanggal->pattern = isdigit;
+	auto iBulan = input("Bulan");
+	iBulan->width = 9;
+	iBulan->limit = 2;
+	iBulan->pattern = isdigit;
+	auto iTahun = input("Tahun");
+	iTahun->width = 10;
+	iTahun->limit = 4;
+	iTahun->pattern = isdigit;
+	auto bDaftar = button("Daftar", [&loop]() { loop = false; });
+	auto bKeluar = button("Keluar", [&loop]() { loop = false; });
 
 	auto vc = vcontainer(
-		iUsername,
-		iPassword,
-		bLogin,
-		bExit
+		hcontainer(iNamaDepan, iNamaBelakang),
+		iEmail,
+		iNomorTelepon,
+		iAlamat,
+		hcontainer(iTanggal, iBulan, iTahun),
+		bDaftar,
+		bKeluar
 	);
 	vc->focused(true);
-	std::cout << "\x1b[?25l" << std::flush;
-	while (true) {
-		auto vl = vlayout(
-			hlayout(text("Username :"), iUsername),
-			hlayout(text("Password :"), iPassword),
-			bLogin,
-			bExit
-		);
 
-		vl->init();
-		int x = (b.getWidth() - vl->width) / 2;
-		int y = (b.getHeight() - vl->height) / 2;
-		vl->set({ x, y, x + vl->width, y + vl->height });
-		b.clear();
-		vl->render(b);
-		std::cout << b.toString() << "\x1b[H" << std::flush;
+	std::cout << "\x1b[?25l" << std::flush;
+	while (loop) {
+		render(b, vlayout(
+			text("=============================="),
+			text(" PENDAFTARAN KEANGGOTAAN KLUB"),
+			text("=============================="),
+			text(""),
+			text("Nama"),
+			hlayout(iNamaDepan, text(" "), iNamaBelakang),
+			text("Email"),
+			iEmail,
+			text("Nomor Telepon"),
+			iNomorTelepon,
+			text("Alamat"),
+			iAlamat,
+			text("Tanggal Lahir"),
+			hlayout(iTanggal, text(" "), iBulan, text(" "), iTahun),
+			bDaftar,
+			bKeluar)
+		);
 
 		INPUT_RECORD record[128];
 		DWORD  eventsRead;

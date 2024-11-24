@@ -51,7 +51,18 @@ int main() {
 	iTahun->width = 10;
 	iTahun->limit = 4;
 	iTahun->pattern = isdigit;
-	auto bDaftar = button("Daftar", [&loop]() { loop = false; });
+	auto bDaftar = button("Daftar", [&]() {
+		loop = false;
+
+		auto bOk = button("Ok");
+		bOk->focused(true);
+
+		render(b, vlayout(
+			text("  PENDAFTARAN BERHASIL  "),
+			text(""),
+			bOk
+		) | border);
+		});
 	auto bKeluar = button("Keluar", [&loop]() { loop = false; });
 
 	auto vc = vcontainer(
@@ -83,8 +94,8 @@ int main() {
 			text("Tanggal Lahir"),
 			hlayout(iTanggal, text(" "), iBulan, text(" "), iTahun),
 			bDaftar,
-			bKeluar)
-		);
+			bKeluar
+		));
 
 		INPUT_RECORD record[128];
 		DWORD  eventsRead;
@@ -93,4 +104,6 @@ int main() {
 			if (record[i].EventType == KEY_EVENT && record[i].Event.KeyEvent.bKeyDown)
 				vc->onkey(record[i].Event.KeyEvent);
 	}
+
+	std::cin.get();
 }

@@ -4,6 +4,7 @@
 using simple::COLOR;
 using simple::pixel;
 using simple::buffer;
+using simple::buttons_group;
 
 HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
 HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
@@ -30,47 +31,55 @@ int main() {
 	bool loop = true;
 
 	auto iNamaDepan = input("Nama Depan");
-	iNamaDepan->width = 14;
+	iNamaDepan->width = 24;
 	auto iNamaBelakang = input("Nama Belakang");
-	iNamaBelakang->width = 15;
+	iNamaBelakang->width = 25;
+	auto rLakiLaki = radio("Laki-laki");
+	auto rPerempuan = radio("Perempuan");
+	auto bgJenisKelamin = buttons_group({ rLakiLaki, rPerempuan });
 	auto iEmail = input("your@mail.id");
+	iEmail->width = 50;
 	auto iNomorTelepon = input("08***");
+	iNomorTelepon->width = 50;
 	iNomorTelepon->pattern = isdigit;
 	iNomorTelepon->limit = 13;
 	auto iAlamat = input();
+	iAlamat->width = 50;
 	iAlamat->height = 3;
+	auto r1 = radio("Islam");
+	auto r2 = radio("Kristen");
+	auto r3 = radio("Hindu");
+	auto r4 = radio("Buddha");
+	auto r5 = radio("Konghuchu");
+	auto gAgama = buttons_group({ r1, r2, r3, r4, r5 });
 	auto iTanggal = input("Tanggal");
-	iTanggal->width = 9;
+	iTanggal->width = 16;
 	iTanggal->limit = 2;
 	iTanggal->pattern = isdigit;
 	auto iBulan = input("Bulan");
-	iBulan->width = 9;
+	iBulan->width = 16;
 	iBulan->limit = 2;
 	iBulan->pattern = isdigit;
 	auto iTahun = input("Tahun");
-	iTahun->width = 10;
+	iTahun->width = 16;
 	iTahun->limit = 4;
 	iTahun->pattern = isdigit;
-	auto bDaftar = button("Daftar", [&]() {
-		loop = false;
-
-		auto bOk = button("Ok");
-		bOk->focused(true);
-
-		render(b, vlayout(
-			text("  PENDAFTARAN BERHASIL  "),
-			text(""),
-			bOk
-		) | border);
-		});
+	auto bDaftar = button("Daftar", [&loop]() {	loop = false; });
+	auto cConfirm = checkbox("Bagikan kepada teman");
+	auto cCheck = checkbox("Saya menyetujui persyaratan");
 	auto bKeluar = button("Keluar", [&loop]() { loop = false; });
 
 	auto vc = vcontainer(
 		hcontainer(iNamaDepan, iNamaBelakang),
+		hcontainer(rLakiLaki, rPerempuan),
 		iEmail,
 		iNomorTelepon,
 		iAlamat,
+		hcontainer(r1, r2, r3),
+		hcontainer(r4, r5),
 		hcontainer(iTanggal, iBulan, iTahun),
+		cCheck,
+		cConfirm,
 		bDaftar,
 		bKeluar
 	);
@@ -85,25 +94,30 @@ int main() {
 			text(""),
 			text("Nama"),
 			hlayout(iNamaDepan, text(" "), iNamaBelakang),
+			text("Jenis Kelamin"),
+			hlayout(rLakiLaki, text(" "), rPerempuan),
 			text("Email"),
 			iEmail,
 			text("Nomor Telepon"),
 			iNomorTelepon,
 			text("Alamat"),
 			iAlamat,
+			text("Agama"),
+			hlayout(r1, text(" "), r2, text(" "), r3),
+			hlayout(r4, text(" "), r5),
 			text("Tanggal Lahir"),
 			hlayout(iTanggal, text(" "), iBulan, text(" "), iTahun),
+			cCheck,
+			cConfirm,
 			bDaftar,
 			bKeluar
 		));
 
 		INPUT_RECORD record[128];
-		DWORD  eventsRead;
+		DWORD eventsRead;
 		ReadConsoleInput(hIn, record, 128, &eventsRead);
 		for (DWORD i = 0; i < eventsRead; ++i)
 			if (record[i].EventType == KEY_EVENT && record[i].Event.KeyEvent.bKeyDown)
 				vc->onkey(record[i].Event.KeyEvent);
 	}
-
-	std::cin.get();
 }

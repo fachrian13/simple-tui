@@ -177,7 +177,42 @@ namespace simple {
 		private:
 			bool focus = false;
 		};
+		class buttons_group; class check_button {
+		public:
+			bool checked() {
+				return this->isChecked;
+			}
+			void checked(bool flag) {
+				this->isChecked = flag;
+			}
+			void setGroup(buttons_group* group) {
+				this->group = group;
+			}
+
+		protected:
+			buttons_group* group = nullptr;
+
+		private:
+			bool isChecked = false;
+		};
+		class buttons_group final {
+		public:
+			buttons_group(std::vector<std::shared_ptr<check_button>> buttons) {
+				for (const auto& button : buttons) {
+					button->setGroup(this);
+					this->buttons.push_back(std::move(button));
+				}
+			}
+			void clear() {
+				for (const auto& button : this->buttons)
+					button->checked(false);
+			}
+
+		private:
+			std::vector<std::shared_ptr<check_button>> buttons;
+		};
 	}
+	using buttons_group = base::buttons_group;
 
 	class vertical_layout final : public base::node {
 	public:
@@ -340,6 +375,35 @@ namespace simple {
 			for (int y = node::dimension.top; y < node::dimension.bottom; ++y)
 				for (int x = node::dimension.left; x < node::dimension.right; ++x)
 					buf.at(y, x).background = this->color;
+		}
+
+	private:
+		COLOR color = COLOR::DEFAULT;
+	};
+	class foreground final : public base::node_style {
+	public:
+		foreground(std::shared_ptr<node> node, COLOR color) :
+			node_style(std::move(node)),
+			color(color)
+		{
+		}
+
+		void init() override {
+			node_style::init();
+
+			node::width = node_style::target->width;
+			node::height = node_style::target->height;
+		}
+		void set(rect dimension) override {
+			node::set(dimension);
+			node_style::set(dimension);
+		}
+		void render(buffer& buf) override {
+			node_style::render(buf);
+
+			for (int y = node::dimension.top; y < node::dimension.bottom; ++y)
+				for (int x = node::dimension.left; x < node::dimension.right; ++x)
+					buf.at(y, x).foreground = this->color;
 		}
 
 	private:
@@ -748,6 +812,97 @@ namespace simple {
 		int yCursor = 0;
 		int textBegin = 0;
 	};
+	class radio final : public base::node, public base::component, public base::check_button {
+	public:
+		radio(std::string name) :
+			name(name)
+		{
+		}
+		std::string getName() {
+			return this->name;
+		}
+
+		void init() override {
+			node::width = !this->name.empty() ? int(this->name.size()) + 3 : 3;
+			node::height = 1;
+		}
+		void render(buffer& buf) override {
+			buf.at(node::dimension.top, node::dimension.left).value = '(';
+			buf.at(node::dimension.top, node::dimension.left + 2).value = ')';
+
+			if (!this->name.empty())
+				for (int y = node::dimension.top, i = 0; y < node::dimension.bottom; ++y)
+					for (int x = node::dimension.left + 3; x < node::dimension.right; ++x, ++i)
+						buf.at(y, x).value = this->name.at(i);
+
+			if (component::focused())
+				for (int y = node::dimension.top; y < node::dimension.bottom; ++y)
+					for (int x = node::dimension.left; x < node::dimension.right; ++x)
+						buf.at(y, x).invert = true;
+
+			if (check_button::checked())
+				buf.at(node::dimension.top, node::dimension.left + 1).value = '*';
+		}
+
+		bool onkey(KEY_EVENT_RECORD key) override {
+			if (key.wVirtualKeyCode == VK_RETURN || key.uChar.AsciiChar == ' ') {
+				if (check_button::group)
+					check_button::group->clear();
+
+				check_button::checked(true);
+				return true;
+			}
+
+			return false;
+		}
+
+	private:
+		std::string name;
+	};
+	class checkbox final : public base::node, public base::component, public base::check_button {
+	public:
+		checkbox(std::string name) :
+			name(name)
+		{
+		}
+		std::string getName() {
+			return this->name;
+		}
+
+		void init() override {
+			node::width = !this->name.empty() ? int(this->name.size()) + 3 : 3;
+			node::height = 1;
+		}
+		void render(buffer& buf) override {
+			buf.at(node::dimension.top, node::dimension.left).value = '[';
+			buf.at(node::dimension.top, node::dimension.left + 2).value = ']';
+
+			if (!this->name.empty())
+				for (int y = node::dimension.top, i = 0; y < node::dimension.bottom; ++y)
+					for (int x = node::dimension.left + 3; x < node::dimension.right; ++x, ++i)
+						buf.at(y, x).value = this->name.at(i);
+
+			if (component::focused())
+				for (int y = node::dimension.top; y < node::dimension.bottom; ++y)
+					for (int x = node::dimension.left; x < node::dimension.right; ++x)
+						buf.at(y, x).invert = true;
+
+			if (check_button::checked())
+				buf.at(node::dimension.top, node::dimension.left + 1).value = '*';
+		}
+
+		bool onkey(KEY_EVENT_RECORD key) override {
+			if (key.wVirtualKeyCode == VK_RETURN || key.uChar.AsciiChar == ' ') {
+				check_button::checked(!check_button::checked());
+				return true;
+			}
+
+			return false;
+		}
+
+	private:
+		std::string name;
+	};
 }
 
 std::shared_ptr<simple::base::node> operator |(
@@ -788,6 +943,13 @@ std::shared_ptr<simple::base::node> background(std::shared_ptr<simple::base::nod
 std::function<std::shared_ptr<simple::base::node>(std::shared_ptr<simple::base::node>)> background(simple::COLOR color) {
 	return [color](std::shared_ptr<simple::base::node> node) { return background(std::move(node), color); };
 }
+std::shared_ptr<simple::base::node> foreground(std::shared_ptr<simple::base::node> target, simple::COLOR color) {
+	return std::make_shared<simple::foreground>(std::move(target), color);
+}
+std::function<std::shared_ptr<simple::base::node>(std::shared_ptr<simple::base::node>)> foreground(simple::COLOR color) {
+	return [color](std::shared_ptr<simple::base::node> node) { return foreground(std::move(node), color); };
+}
+
 template<class T, class... A>
 std::shared_ptr<simple::base::component> vcontainer(T node, A... args) {
 	std::vector<std::shared_ptr<simple::base::component>> nodes;
@@ -823,6 +985,18 @@ std::shared_ptr<simple::dropdown> dropdown(std::vector<std::string> values, std:
 }
 std::shared_ptr<simple::dropdown> dropdown(std::vector<std::string> values) {
 	return std::make_shared<simple::dropdown>(values, "");
+}
+std::shared_ptr<simple::radio> radio(std::string name) {
+	return std::make_shared<simple::radio>(name);
+}
+std::shared_ptr<simple::radio> radio() {
+	return std::make_shared<simple::radio>("");
+}
+std::shared_ptr<simple::checkbox> checkbox(std::string name) {
+	return std::make_shared<simple::checkbox>(name);
+}
+std::shared_ptr<simple::checkbox> checkbox() {
+	return std::make_shared<simple::checkbox>("");
 }
 
 #endif

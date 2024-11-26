@@ -46,12 +46,13 @@ int main() {
 	auto iAlamat = input();
 	iAlamat->width = 50;
 	iAlamat->height = 3;
-	auto r1 = radio("Islam");
-	auto r2 = radio("Kristen");
-	auto r3 = radio("Hindu");
-	auto r4 = radio("Buddha");
-	auto r5 = radio("Konghuchu");
-	auto gAgama = buttons_group({ r1, r2, r3, r4, r5 });
+	auto rIslam = radio("Islam");
+	auto rKristen1 = radio("Kristen Katolik");
+	auto rKristen2 = radio("Kristen Protestan");
+	auto rHindu = radio("Hindu");
+	auto rBuddha = radio("Buddha");
+	auto rKonghuchu = radio("Konghuchu");
+	auto gAgama = buttons_group({ rIslam, rKristen1, rKristen2, rHindu, rBuddha, rKonghuchu });
 	auto iTanggal = input("Tanggal");
 	iTanggal->width = 16;
 	iTanggal->limit = 2;
@@ -75,8 +76,8 @@ int main() {
 		iEmail,
 		iNomorTelepon,
 		iAlamat,
-		hcontainer(r1, r2, r3),
-		hcontainer(r4, r5),
+		hcontainer(rIslam, rKristen1, rKristen2),
+		hcontainer(rHindu, rBuddha, rKonghuchu),
 		hcontainer(iTanggal, iBulan, iTahun),
 		cCheck,
 		cConfirm,
@@ -103,8 +104,8 @@ int main() {
 			text("Alamat"),
 			iAlamat,
 			text("Agama"),
-			hlayout(r1, text(" "), r2, text(" "), r3),
-			hlayout(r4, text(" "), r5),
+			hlayout(rIslam, text(" "), rKristen1, text(" "), rKristen2),
+			hlayout(rHindu, text(" "), rBuddha, text(" "), rKonghuchu),
 			text("Tanggal Lahir"),
 			hlayout(iTanggal, text(" "), iBulan, text(" "), iTahun),
 			cCheck,

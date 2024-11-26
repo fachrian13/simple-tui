@@ -179,6 +179,10 @@ namespace simple {
 		};
 		class buttons_group; class check_button {
 		public:
+			check_button(std::string name) :
+				name(name)
+			{
+			}
 			bool checked() {
 				return this->isChecked;
 			}
@@ -188,9 +192,11 @@ namespace simple {
 			void setGroup(buttons_group* group) {
 				this->group = group;
 			}
+			virtual std::string getName() { return this->name; }
 
 		protected:
 			buttons_group* group = nullptr;
+			std::string name;
 
 		private:
 			bool isChecked = false;
@@ -206,6 +212,13 @@ namespace simple {
 			void clear() {
 				for (const auto& button : this->buttons)
 					button->checked(false);
+			}
+			std::shared_ptr<check_button> selected() {
+				for (const auto& button : this->buttons)
+					if (button->checked())
+						return button;
+
+				return nullptr;
 			}
 
 		private:
@@ -455,7 +468,6 @@ namespace simple {
 			return false;
 		}
 
-
 	private:
 		size_t focusedComponent = 0;
 		std::vector<std::shared_ptr<component>> components;
@@ -504,7 +516,6 @@ namespace simple {
 
 			return false;
 		}
-
 
 	private:
 		size_t focusedComponent = 0;
@@ -649,7 +660,7 @@ namespace simple {
 				}
 				break;
 			case VK_UP:
-				if (this->index - node::width > 0) {
+				if (this->index - node::width >= 0) {
 					this->index -= node::width;
 					moveCursor(-1, 0);
 					return true;
@@ -815,7 +826,7 @@ namespace simple {
 	class radio final : public base::node, public base::component, public base::check_button {
 	public:
 		radio(std::string name) :
-			name(name)
+			check_button(name)
 		{
 		}
 		std::string getName() {
@@ -830,10 +841,10 @@ namespace simple {
 			buf.at(node::dimension.top, node::dimension.left).value = '(';
 			buf.at(node::dimension.top, node::dimension.left + 2).value = ')';
 
-			if (!this->name.empty())
+			if (!check_button::name.empty())
 				for (int y = node::dimension.top, i = 0; y < node::dimension.bottom; ++y)
 					for (int x = node::dimension.left + 3; x < node::dimension.right; ++x, ++i)
-						buf.at(y, x).value = this->name.at(i);
+						buf.at(y, x).value = check_button::name.at(i);
 
 			if (component::focused())
 				for (int y = node::dimension.top; y < node::dimension.bottom; ++y)
@@ -855,14 +866,11 @@ namespace simple {
 
 			return false;
 		}
-
-	private:
-		std::string name;
 	};
 	class checkbox final : public base::node, public base::component, public base::check_button {
 	public:
 		checkbox(std::string name) :
-			name(name)
+			check_button(name)
 		{
 		}
 		std::string getName() {
@@ -877,10 +885,10 @@ namespace simple {
 			buf.at(node::dimension.top, node::dimension.left).value = '[';
 			buf.at(node::dimension.top, node::dimension.left + 2).value = ']';
 
-			if (!this->name.empty())
+			if (!check_button::name.empty())
 				for (int y = node::dimension.top, i = 0; y < node::dimension.bottom; ++y)
 					for (int x = node::dimension.left + 3; x < node::dimension.right; ++x, ++i)
-						buf.at(y, x).value = this->name.at(i);
+						buf.at(y, x).value = check_button::name.at(i);
 
 			if (component::focused())
 				for (int y = node::dimension.top; y < node::dimension.bottom; ++y)
@@ -899,9 +907,6 @@ namespace simple {
 
 			return false;
 		}
-
-	private:
-		std::string name;
 	};
 }
 

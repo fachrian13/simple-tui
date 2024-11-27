@@ -53,6 +53,50 @@ int main() {
 	auto rBuddha = radio("Buddha");
 	auto rKonghuchu = radio("Konghuchu");
 	auto gAgama = buttons_group({ rIslam, rKristen1, rKristen2, rHindu, rBuddha, rKonghuchu });
+	auto dProvinsi = dropdown(
+		{
+			"Nanggroe Aceh Darussalam(Ibu Kota Banda Aceh)",
+			"Sumatera Utara(Ibu Kota Medan)",
+			"Sumatera Selatan(Ibu Kota Palembang)",
+			"Sumatera Barat(Ibu Kota Padang)",
+			"Bengkulu(Ibu Kota Bengkulu)",
+			"Riau(Ibu Kota Pekanbaru)",
+			"Kepulauan Riau(Ibu Kota Tanjung Pinang)",
+			"Jambi(Ibu Kota Jambi)",
+			"Lampung(Ibu Kota Bandar Lampung)",
+			"Bangka Belitung(Ibu Kota Pangkal Pinang)",
+			"Kalimantan Barat(Ibu Kota Pontianak)",
+			"Kalimantan Timur(Ibu Kota Samarinda)",
+			"Kalimantan Selatan(Ibu Kota Banjarbaru)",
+			"Kalimantan Tengah(Ibu Kota Palangkaraya)",
+			"Kalimantan Utara(Ibu Kota Tanjung Selor)",
+			"Banten(Ibu Kota Serang)",
+			"DKI Jakarta(Ibu Kota Jakarta)",
+			"Jawa Barat(Ibu Kota Bandung)",
+			"Jawa Tengah(Ibu Kota Semarang)",
+			"Daerah Istimewa Yogyakarta(Ibu Kota Yogyakarta)",
+			"Jawa Timur(Ibu Kota Surabaya)",
+			"Bali(Ibu Kota Denpasar)",
+			"Nusa Tenggara Timur(Ibu Kota Kupang)",
+			"Nusa Tenggara Barat(Ibu Kota Mataram)",
+			"Gorontalo(Ibu Kota Gorontalo)",
+			"Sulawesi Barat(Ibu Kota Mamuju)",
+			"Sulawesi Tengah(Ibu Kota Palu)",
+			"Sulawesi Utara(Ibu Kota Manado)",
+			"Sulawesi Tenggara(Ibu Kota Kendari)",
+			"Sulawesi Selatan(Ibu Kota Makassar)",
+			"Maluku Utara(Ibu Kota Sofifi)",
+			"Maluku(Ibu Kota Ambon)",
+			"Papua Barat(Ibu Kota Manokwari)",
+			"Papua(Ibu Kota Jayapura)",
+			"Papua Tengah(Ibu Kota Nabire)",
+			"Papua Pegunungan(Ibu Kota Jayawijaya)",
+			"Papua Selatan(Ibu Kota Merauke)",
+			"Papua Barat Daya(Ibu Kota Sorong)"
+		},
+		"Silakan Pilih"
+	);
+	dProvinsi->width = 50;
 	auto iTanggal = input("Tanggal");
 	iTanggal->width = 16;
 	iTanggal->limit = 2;
@@ -78,6 +122,7 @@ int main() {
 		iAlamat,
 		hcontainer(rIslam, rKristen1, rKristen2),
 		hcontainer(rHindu, rBuddha, rKonghuchu),
+		dProvinsi,
 		hcontainer(iTanggal, iBulan, iTahun),
 		cCheck,
 		cConfirm,
@@ -106,13 +151,15 @@ int main() {
 			text("Agama"),
 			hlayout(rIslam, text(" "), rKristen1, text(" "), rKristen2),
 			hlayout(rHindu, text(" "), rBuddha, text(" "), rKonghuchu),
+			text("Provinsi"),
+			dProvinsi,
 			text("Tanggal Lahir"),
 			hlayout(iTanggal, text(" "), iBulan, text(" "), iTahun),
 			cCheck,
 			cConfirm,
 			bDaftar,
 			bKeluar
-		));
+		) | background(COLOR::BLUE) | border);
 
 		INPUT_RECORD record[128];
 		DWORD eventsRead;

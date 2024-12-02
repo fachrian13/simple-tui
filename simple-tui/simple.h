@@ -141,17 +141,29 @@ namespace Simple {
 		class Focusable {
 		public:
 			bool Focused() {
-				return this->focused;
+				return this->$;
 			}
 			virtual void Focused(bool flag) {
-				this->focused = flag;
+				this->$ = flag;
 			}
 			virtual bool OnKey(KEY_EVENT_RECORD) {
 				return false;
 			}
 
 		private:
-			bool focused = false;
+			bool $ = false;
+		};
+		class Selectable {
+		public:
+			bool Selected() {
+				return this->$;
+			}
+			virtual void Selected(bool flag) {
+				this->$ = flag;
+			}
+
+		private:
+			bool $ = false;
 		};
 	}
 	namespace Utils {
@@ -411,20 +423,20 @@ namespace Simple {
 			if (Renderable::Height == 0)
 				Renderable::Height = 1;
 		}
-		void Render(Buffer& buf) override {
+		void Render(Buffer& buffer) override {
 			for (int y = Renderable::Dimension.Top; y < Renderable::Dimension.Bottom; ++y)
 				for (int x = Renderable::Dimension.Left; x < Renderable::Dimension.Right; ++x)
-					buf.At(y, x).Invert = true;
+					buffer.At(y, x).Invert = true;
 
 			if (Focusable::Focused())
-				buf.At(Renderable::Dimension.Top + this->yCursor, Renderable::Dimension.Left + this->xCursor).Invert = false;
+				buffer.At(Renderable::Dimension.Top + this->yCursor, Renderable::Dimension.Left + this->xCursor).Invert = false;
 
 			if (this->value.empty() && !this->placeholder.empty()) {
 				for (int y = Renderable::Dimension.Top, i = 0; y < Renderable::Dimension.Bottom; ++y) {
 					for (int x = Renderable::Dimension.Left; x < Renderable::Dimension.Right; ++x, ++i) {
 						if (i < this->placeholder.size()) {
-							buf.At(y, x).Italic = true;
-							buf.At(y, x).Value = this->placeholder.at(i);
+							buffer.At(y, x).Italic = true;
+							buffer.At(y, x).Value = this->placeholder.at(i);
 						}
 						else break;
 					}
@@ -434,14 +446,14 @@ namespace Simple {
 				for (int y = Renderable::Dimension.Top, i = this->textBegin; y < Renderable::Dimension.Bottom; ++y)
 					for (int x = Renderable::Dimension.Left; x < Renderable::Dimension.Right; ++x, ++i)
 						if (i < this->value.size())
-							buf.At(y, x).Value = u8"•";
+							buffer.At(y, x).Value = u8"•";
 						else break;
 			}
 			else {
 				for (int y = Renderable::Dimension.Top, i = this->textBegin; y < Renderable::Dimension.Bottom; ++y)
 					for (int x = Renderable::Dimension.Left; x < Renderable::Dimension.Right; ++x, ++i)
 						if (i < this->value.size())
-							buf.At(y, x).Value = this->value.at(i);
+							buffer.At(y, x).Value = this->value.at(i);
 						else break;
 			}
 		}
@@ -568,19 +580,19 @@ namespace Simple {
 				)->size());
 			Renderable::Height = Focusable::Focused() ? std::min(7, int(this->values.size())) : 1;
 		}
-		void Render(Buffer& buf) override {
+		void Render(Buffer& buffer) override {
 			for (int y = Renderable::Dimension.Top; y < Renderable::Dimension.Bottom; ++y)
 				for (int x = Renderable::Dimension.Left; x < Renderable::Dimension.Right; ++x)
-					buf.At(y, x).Invert = true;
+					buffer.At(y, x).Invert = true;
 
 			if (Focusable::Focused()) {
 				for (int x = Renderable::Dimension.Left, i = 0; x < Renderable::Dimension.Right; ++x, ++i)
-					buf.At(Renderable::Dimension.Top + this->yCursor, x).Invert = false;
+					buffer.At(Renderable::Dimension.Top + this->yCursor, x).Invert = false;
 
 				for (int y = Renderable::Dimension.Top, i = this->textBegin; y < Renderable::Dimension.Bottom; ++y, ++i)
 					for (int x = Renderable::Dimension.Left, ii = 0; x < Renderable::Dimension.Right; ++x, ++ii)
 						if (ii < this->values.at(i).size())
-							buf.At(y, x).Value = this->values.at(i).at(ii);
+							buffer.At(y, x).Value = this->values.at(i).at(ii);
 						else break;
 			}
 			else {
@@ -588,8 +600,8 @@ namespace Simple {
 					for (int y = Renderable::Dimension.Top, i = 0; y < Renderable::Dimension.Bottom; ++y) {
 						for (int x = Renderable::Dimension.Left; x < Renderable::Dimension.Right; ++x, ++i) {
 							if (i < this->placeholder.size()) {
-								buf.At(y, x).Italic = true;
-								buf.At(y, x).Value = this->placeholder.at(i);
+								buffer.At(y, x).Italic = true;
+								buffer.At(y, x).Value = this->placeholder.at(i);
 							}
 							else break;
 						}
@@ -599,7 +611,7 @@ namespace Simple {
 					for (int y = Renderable::Dimension.Top, i = 0; y < Renderable::Dimension.Bottom; ++y)
 						for (int x = Renderable::Dimension.Left; x < Renderable::Dimension.Right; ++x, ++i)
 							if (i < this->selectedValue.size())
-								buf.At(y, x).Value = this->selectedValue.at(i);
+								buffer.At(y, x).Value = this->selectedValue.at(i);
 							else break;
 				}
 			}
@@ -667,6 +679,66 @@ namespace Simple {
 		int yCursor = 0;
 		int textBegin = 0;
 	};
+	class Radio final : public Base::Renderable, public Base::Focusable, public Base::Selectable {
+	public:
+		Radio() = default;
+
+		void Init() override {
+			Renderable::Width = 3;
+			Renderable::Height = 1;
+		}
+		void Render(Buffer& buffer) override {
+			buffer.At(Renderable::Dimension.Top, Renderable::Dimension.Left).Value = "(";
+			buffer.At(Renderable::Dimension.Top, Renderable::Dimension.Right - 1).Value = ")";
+
+			if (Selectable::Selected())
+				buffer.At(Renderable::Dimension.Top, Renderable::Dimension.Left + 1).Value = u8"\u25CF";
+
+			if (Focusable::Focused())
+				for (int y = Renderable::Dimension.Top; y < Renderable::Dimension.Bottom; ++y)
+					for (int x = Renderable::Dimension.Left; x < Renderable::Dimension.Right; ++x)
+						buffer.At(y, x).Invert = true;
+		}
+
+		bool OnKey(KEY_EVENT_RECORD key) override {
+			if (key.wVirtualKeyCode == VK_RETURN || key.uChar.AsciiChar == ' ') {
+				Selectable::Selected(true);
+				return true;
+			}
+
+			return false;
+		}
+	};
+	class CheckBox final : public Base::Renderable, public Base::Focusable, public Base::Selectable {
+	public:
+		CheckBox() = default;
+
+		void Init() override {
+			Renderable::Width = 3;
+			Renderable::Height = 1;
+		}
+		void Render(Buffer& buffer) override {
+			buffer.At(Renderable::Dimension.Top, Renderable::Dimension.Left).Value = "[";
+			buffer.At(Renderable::Dimension.Top, Renderable::Dimension.Right - 1).Value = "]";
+
+			if (Selectable::Selected())
+				buffer.At(Renderable::Dimension.Top, Renderable::Dimension.Left + 1).Value = u8"\u25A0";
+
+			if (Focusable::Focused())
+				for (int y = Renderable::Dimension.Top; y < Renderable::Dimension.Bottom; ++y)
+					for (int x = Renderable::Dimension.Left; x < Renderable::Dimension.Right; ++x)
+						buffer.At(y, x).Invert = true;
+		}
+
+		bool OnKey(KEY_EVENT_RECORD key) override {
+			if (key.wVirtualKeyCode == VK_RETURN || key.uChar.AsciiChar == ' ') {
+				Selectable::Selected(!Selectable::Selected());
+				return true;
+			}
+
+			return false;
+		}
+	};
 }
 
 template<class Type, class... Args>
@@ -722,6 +794,12 @@ std::shared_ptr<Simple::Dropdown> Dropdown(std::vector<std::string> value) {
 }
 std::shared_ptr<Simple::Dropdown> Dropdown(std::vector<std::string> value, std::string placeholder) {
 	return std::make_shared<Simple::Dropdown>(std::move(value), std::move(placeholder));
+}
+std::shared_ptr<Simple::Radio> Radio() {
+	return std::make_shared<Simple::Radio>();
+}
+std::shared_ptr<Simple::CheckBox> CheckBox() {
+	return std::make_shared<Simple::CheckBox>();
 }
 
 #endif

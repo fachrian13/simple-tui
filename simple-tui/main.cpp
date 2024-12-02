@@ -73,11 +73,19 @@ int main() {
 	auto iText = Input();
 	iText->Hide = true;
 	auto iPlaceholder = Input("Placeholder");
+	auto r1 = Radio();
+	auto r2 = Radio();
+	auto c1 = CheckBox();
+	auto c2 = CheckBox();
 
 	auto vContainer = VContainer(
 		HContainer(bClick, bFocused),
 		dName,
-		HContainer(iText, iPlaceholder)
+		HContainer(iText, iPlaceholder),
+		r1,
+		r2,
+		c1,
+		c2
 	);
 	vContainer->Focused(true);
 
@@ -86,7 +94,11 @@ int main() {
 		Text("Vertical 2 "),
 		HLayout(bClick, bFocused),
 		dName,
-		HLayout(iText, Text(" "), iPlaceholder)
+		HLayout(iText, Text(" "), iPlaceholder),
+		r1,
+		r2,
+		c1,
+		c2
 	);
 
 	while (state) {

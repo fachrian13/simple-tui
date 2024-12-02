@@ -2,6 +2,7 @@
 #define _SIMPLE_TUI_
 #define NOMINMAX
 
+#include <functional>
 #include <memory>
 #include <string>
 #include <vector>
@@ -44,6 +45,14 @@ namespace Simple {
 		}
 
 	public:
+		bool Bold = false;
+		bool Dim = false;
+		bool Italic = false;
+		bool Underline = false;
+		bool Blink = false;
+		bool Invert = false;
+		bool Invisible = false;
+		bool Strikethrough = false;
 		Color Background = Color::Default;
 		Color Foreground = Color::Default;
 		std::string Value = " ";
@@ -63,7 +72,6 @@ namespace Simple {
 			pixels(width* height, style)
 		{
 		}
-
 		Pixel& At(size_t y, size_t x) {
 			return this->pixels.at(y * this->width + x);
 		}
@@ -75,6 +83,14 @@ namespace Simple {
 					Pixel& p = this->pixels.at(y * this->width + x);
 
 					result += "\x1b[";
+					result += p.Bold ? "1;" : "22;";
+					result += p.Dim ? "2;" : "22;";
+					result += p.Italic ? "3;" : "23;";
+					result += p.Underline ? "4;" : "24;";
+					result += p.Blink ? "5;" : "25;";
+					result += p.Invert ? "7;" : "27;";
+					result += p.Invisible ? "8;" : "28;";
+					result += p.Strikethrough ? "9;" : "29;";
 					result += std::to_string(p.Foreground);
 					result += ";";
 					result += std::to_string(p.Background + 10);
@@ -89,6 +105,9 @@ namespace Simple {
 			result += "\x1b[m";
 
 			return result;
+		}
+		void Clear() {
+			this->pixels = std::vector<Pixel>(this->width * this->height, this->style);
 		}
 
 	private:
@@ -127,7 +146,9 @@ namespace Simple {
 			virtual void Focused(bool flag) {
 				this->focused = flag;
 			}
-			virtual void OnKey(KEY_EVENT_RECORD) {}
+			virtual bool OnKey(KEY_EVENT_RECORD) {
+				return false;
+			}
 
 		private:
 			bool focused = false;
@@ -247,7 +268,39 @@ namespace Simple {
 
 			this->objects.at(focusedObject)->Focused(flag);
 		}
-		void OnKey(KEY_EVENT_RECORD) override {}
+		bool OnKey(KEY_EVENT_RECORD key) override {
+			auto& focused = this->objects.at(this->focusedObject);
+
+			if (focused->OnKey(key))
+				return true;
+
+			if ((key.dwControlKeyState & SHIFT_PRESSED) && key.wVirtualKeyCode == VK_TAB) {
+				if (this->focusedObject > 0) {
+					focused->Focused(false);
+					this->objects.at(--this->focusedObject)->Focused(true);
+					return true;
+				}
+			}
+			else {
+				if (key.wVirtualKeyCode == VK_DOWN || key.wVirtualKeyCode == VK_TAB || key.uChar.AsciiChar == 'j') {
+					if (this->focusedObject < this->objects.size() - 1) {
+						focused->Focused(false);
+						this->objects.at(++this->focusedObject)->Focused(true);
+						return true;
+					}
+				}
+
+				if (key.wVirtualKeyCode == VK_UP || key.uChar.AsciiChar == 'k') {
+					if (this->focusedObject > 0) {
+						focused->Focused(false);
+						this->objects.at(--this->focusedObject)->Focused(true);
+						return true;
+					}
+				}
+			}
+
+			return false;
+		}
 	private:
 		size_t focusedObject = 0;
 		std::vector<std::shared_ptr<Focusable>> objects;
@@ -264,7 +317,9 @@ namespace Simple {
 
 			this->objects.at(focusedObject)->Focused(flag);
 		}
-		void OnKey(KEY_EVENT_RECORD) override {}
+		bool OnKey(KEY_EVENT_RECORD) override {
+			return false;
+		}
 	private:
 		size_t focusedObject = 0;
 		std::vector<std::shared_ptr<Focusable>> objects;
@@ -273,6 +328,11 @@ namespace Simple {
 	public:
 		Button(std::string&& name) :
 			name(std::move(name))
+		{
+		}
+		Button(std::string&& name, std::function<void()>&& logic) :
+			name(std::move(name)),
+			logic(std::move(logic))
 		{
 		}
 
@@ -286,10 +346,64 @@ namespace Simple {
 			for (int y = Renderable::Dimension.Top, i = 0; y < Renderable::Dimension.Bottom; ++y)
 				for (int x = Renderable::Dimension.Left + 1; x < Renderable::Dimension.Right - 1; ++x, ++i)
 					buffer.At(y, x).Value = this->name.at(i);
+
+			if (Focusable::Focused())
+				for (int y = Renderable::Dimension.Top; y < Renderable::Dimension.Bottom; ++y)
+					for (int x = Renderable::Dimension.Left; x < Renderable::Dimension.Right; ++x)
+						buffer.At(y, x).Invert = true;
+		}
+
+		bool OnKey(KEY_EVENT_RECORD key) override {
+			switch (key.wVirtualKeyCode) {
+			case VK_RETURN:
+				this->logic();
+				return true;
+			}
+
+			return false;
 		}
 
 	private:
 		std::string name;
+		std::function<void()> logic;
+	};
+	class Input final : public Base::Renderable, public Base::Focusable {
+	public:
+		Input() = default;
+		Input(std::string&& placeholder) :
+			placeholder(std::move(placeholder))
+		{
+		}
+
+		void Init() override {
+			if (Renderable::Width == 0)
+				Renderable::Width = 30;
+			if (Renderable::Height == 0)
+				Renderable::Height = 1;
+		}
+		void Render(Buffer& buffer) override {
+			for (int y = Renderable::Dimension.Top; y < Renderable::Dimension.Bottom; ++y)
+				for (int x = Renderable::Dimension.Left; x < Renderable::Dimension.Right; ++x)
+					buffer.At(y, x).Invert = true;
+
+			if (this->value.empty()) {
+				if (!this->placeholder.empty()) {
+					for (int y = Renderable::Dimension.Top, i = 0; y < Renderable::Dimension.Bottom; ++y) {
+						for (int x = Renderable::Dimension.Left; x < Renderable::Dimension.Right; ++x, ++i) {
+							if (i < this->placeholder.size()) {
+								buffer.At(y, x).Italic = true;
+								buffer.At(y, x).Value = this->placeholder.at(i);
+							}
+							else break;
+						}
+					}
+				}
+			}
+		}
+
+	private:
+		std::string value;
+		std::string placeholder;
 	};
 }
 
@@ -331,6 +445,15 @@ std::shared_ptr<Simple::Base::Focusable> HContainer(Type&& object, Args&&... obj
 }
 std::shared_ptr<Simple::Button> Button(std::string value) {
 	return std::make_shared<Simple::Button>(std::move(value));
+}
+std::shared_ptr<Simple::Button> Button(std::string value, std::function<void()> logic) {
+	return std::make_shared<Simple::Button>(std::move(value), std::move(logic));
+}
+std::shared_ptr<Simple::Input> Input() {
+	return std::make_shared<Simple::Input>();
+}
+std::shared_ptr<Simple::Input> Input(std::string placeholder) {
+	return std::make_shared<Simple::Input>(std::move(placeholder));
 }
 
 #endif

@@ -1,9 +1,11 @@
 #ifndef _SIMPLE_TUI_
 #define _SIMPLE_TUI_
+#define NOMINMAX
 
 #include <memory>
 #include <string>
 #include <vector>
+#include <windows.h>
 
 namespace Simple {
 	enum Color : int {
@@ -104,7 +106,7 @@ namespace Simple {
 	};
 
 	namespace Base {
-		class Node {
+		class Renderable {
 		public:
 			virtual void Init() {}
 			virtual void Set(Rect dimension) {
@@ -117,6 +119,19 @@ namespace Simple {
 			int Height = 0;
 			Rect Dimension;
 		};
+		class Focusable {
+		public:
+			bool Focused() {
+				return this->focused;
+			}
+			virtual void Focused(bool flag) {
+				this->focused = flag;
+			}
+			virtual void OnKey(KEY_EVENT_RECORD) {}
+
+		private:
+			bool focused = false;
+		};
 	}
 	namespace Utils {
 		template<class Type, class... Args>
@@ -125,120 +140,197 @@ namespace Simple {
 		}
 	}
 
-	class VerticalLayout final : public Base::Node {
+	class VerticalLayout final : public Base::Renderable {
 	public:
-		VerticalLayout(std::vector<std::shared_ptr<Node>>&& nodes) :
-			nodes(std::move(nodes))
+		VerticalLayout(std::vector<std::shared_ptr<Renderable>>&& objects) :
+			objects(std::move(objects))
 		{
 		}
 
 		void Init() override {
-			for (const auto& node : this->nodes) {
-				node->Init();
+			for (const auto& object : this->objects) {
+				object->Init();
 
-				Node::Width = std::max(Node::Width, node->Width);
-				Node::Height += node->Height;
+				Renderable::Width = std::max(Renderable::Width, object->Width);
+				Renderable::Height += object->Height;
 			}
 		}
 		void Set(Rect dimension) override {
-			Node::Set(dimension);
+			Renderable::Set(dimension);
 
-			int t = Node::Dimension.Top;
-			for (const auto& node : this->nodes) {
-				int l = Node::Dimension.Left;
-				int r = l + node->Width;
-				int b = t + node->Height;
+			int t = Renderable::Dimension.Top;
+			for (const auto& object : this->objects) {
+				int l = Renderable::Dimension.Left;
+				int r = l + object->Width;
+				int b = t + object->Height;
 
-				node->Set({ l, t, r, b });
+				object->Set({ l, t, r, b });
 
 				t = b;
 			}
 		}
 		void Render(Buffer& buffer) override {
-			for (const auto& node : this->nodes)
-				node->Render(buffer);
+			for (const auto& object : this->objects)
+				object->Render(buffer);
 		}
 
 	private:
-		std::vector<std::shared_ptr<Node>> nodes;
+		std::vector<std::shared_ptr<Renderable>> objects;
 	};
-	class HorizontalLayout final : public Base::Node {
+	class HorizontalLayout final : public Base::Renderable {
 	public:
-		HorizontalLayout(std::vector<std::shared_ptr<Node>>&& nodes) :
-			nodes(std::move(nodes))
+		HorizontalLayout(std::vector<std::shared_ptr<Renderable>>&& objects) :
+			objects(std::move(objects))
 		{
 		}
 
 		void Init() override {
-			for (const auto& node : this->nodes) {
-				node->Init();
+			for (const auto& object : this->objects) {
+				object->Init();
 
-				Node::Width += node->Width;
-				Node::Height = std::max(Node::Height, node->Height);
+				Renderable::Width += object->Width;
+				Renderable::Height = std::max(Renderable::Height, object->Height);
 			}
 		}
 		void Set(Rect dimension) override {
-			Node::Set(dimension);
+			Renderable::Set(dimension);
 
-			int l = Node::Dimension.Left;
-			for (const auto& node : this->nodes) {
-				int t = Node::Dimension.Top;
-				int r = l + node->Width;
-				int b = t + node->Height;
+			int l = Renderable::Dimension.Left;
+			for (const auto& object : this->objects) {
+				int t = Renderable::Dimension.Top;
+				int r = l + object->Width;
+				int b = t + object->Height;
 
-				node->Set({ l, t, r, b });
+				object->Set({ l, t, r, b });
 
 				l = r;
 			}
 		}
 		void Render(Buffer& buffer) override {
-			for (const auto& node : this->nodes)
-				node->Render(buffer);
+			for (const auto& object : this->objects)
+				object->Render(buffer);
 		}
 
 	private:
-		std::vector<std::shared_ptr<Node>> nodes;
+		std::vector<std::shared_ptr<Renderable>> objects;
 	};
-	class Text final : public Base::Node {
+	class Text final : public Base::Renderable {
 	public:
-		Text(std::string value) :
+		Text(std::string&& value) :
 			value(std::move(value))
 		{
 		}
 
 		void Init() override {
-			Node::Width = int(this->value.size());
-			Node::Height = 1;
+			Renderable::Width = int(this->value.size());
+			Renderable::Height = 1;
 		}
 		void Render(Buffer& buffer) override {
-			for (int y = Node::Dimension.Top, i = 0; y < Node::Dimension.Bottom; ++y)
-				for (int x = Node::Dimension.Left; x < Node::Dimension.Right; ++x, ++i)
+			for (int y = Renderable::Dimension.Top, i = 0; y < Renderable::Dimension.Bottom; ++y)
+				for (int x = Renderable::Dimension.Left; x < Renderable::Dimension.Right; ++x, ++i)
 					buffer.At(y, x).Value = value.at(i);
 		}
 
 	private:
 		std::string value;
 	};
+
+	class VerticalContainer final : public Base::Focusable {
+	public:
+		VerticalContainer(std::vector<std::shared_ptr<Focusable>>&& objects) :
+			objects(std::move(objects))
+		{
+		}
+
+		void Focused(bool flag) override {
+			Focusable::Focused(flag);
+
+			this->objects.at(focusedObject)->Focused(flag);
+		}
+		void OnKey(KEY_EVENT_RECORD) override {}
+	private:
+		size_t focusedObject = 0;
+		std::vector<std::shared_ptr<Focusable>> objects;
+	};
+	class HorizontalContainer final : public Base::Focusable {
+	public:
+		HorizontalContainer(std::vector<std::shared_ptr<Focusable>>&& objects) :
+			objects(std::move(objects))
+		{
+		}
+
+		void Focused(bool flag) override {
+			Focusable::Focused(flag);
+
+			this->objects.at(focusedObject)->Focused(flag);
+		}
+		void OnKey(KEY_EVENT_RECORD) override {}
+	private:
+		size_t focusedObject = 0;
+		std::vector<std::shared_ptr<Focusable>> objects;
+	};
+	class Button final : public Base::Renderable, public Base::Focusable {
+	public:
+		Button(std::string&& name) :
+			name(std::move(name))
+		{
+		}
+
+		void Init() override {
+			Renderable::Width = int(this->name.size()) + 2;
+			Renderable::Height = 1;
+		}
+		void Render(Buffer& buffer) override {
+			buffer.At(Renderable::Dimension.Top, Renderable::Dimension.Left).Value = "[";
+			buffer.At(Renderable::Dimension.Top, Renderable::Dimension.Right - 1).Value = "]";
+			for (int y = Renderable::Dimension.Top, i = 0; y < Renderable::Dimension.Bottom; ++y)
+				for (int x = Renderable::Dimension.Left + 1; x < Renderable::Dimension.Right - 1; ++x, ++i)
+					buffer.At(y, x).Value = this->name.at(i);
+		}
+
+	private:
+		std::string name;
+	};
 }
 
 template<class Type, class... Args>
-std::shared_ptr<Simple::Base::Node> VLayout(Type&& node, Args&&... nodes) {
+std::shared_ptr<Simple::Base::Renderable> VLayout(Type&& object, Args&&... objects) {
 	return std::make_shared<Simple::VerticalLayout>(
-		Simple::Utils::ToVector<std::shared_ptr<Simple::Base::Node>>(
-			std::forward<Type>(node), std::forward<Args>(nodes)...
+		Simple::Utils::ToVector<std::shared_ptr<Simple::Base::Renderable>>(
+			std::forward<Type>(object), std::forward<Args>(objects)...
 		)
 	);
 }
 template<class Type, class... Args>
-std::shared_ptr<Simple::Base::Node> HLayout(Type&& node, Args&&... nodes) {
+std::shared_ptr<Simple::Base::Renderable> HLayout(Type&& object, Args&&... objects) {
 	return std::make_shared<Simple::HorizontalLayout>(
-		Simple::Utils::ToVector<std::shared_ptr<Simple::Base::Node>>(
-			std::forward<Type>(node), std::forward<Args>(nodes)...
+		Simple::Utils::ToVector<std::shared_ptr<Simple::Base::Renderable>>(
+			std::forward<Type>(object), std::forward<Args>(objects)...
 		)
 	);
 }
-std::shared_ptr<Simple::Base::Node> Text(std::string value) {
+std::shared_ptr<Simple::Base::Renderable> Text(std::string value) {
 	return std::make_shared<Simple::Text>(std::move(value));
+}
+
+template<class Type, class... Args>
+std::shared_ptr<Simple::Base::Focusable> VContainer(Type&& object, Args&&... objects) {
+	return std::make_shared<Simple::VerticalContainer>(
+		Simple::Utils::ToVector<std::shared_ptr<Simple::Base::Focusable>>(
+			std::forward<Type>(object), std::forward<Args>(objects)...
+		)
+	);
+}
+template<class Type, class... Args>
+std::shared_ptr<Simple::Base::Focusable> HContainer(Type&& object, Args&&... objects) {
+	return std::make_shared<Simple::HorizontalContainer>(
+		Simple::Utils::ToVector<std::shared_ptr<Simple::Base::Focusable>>(
+			std::forward<Type>(object), std::forward<Args>(objects)...
+		)
+	);
+}
+std::shared_ptr<Simple::Button> Button(std::string value) {
+	return std::make_shared<Simple::Button>(std::move(value));
 }
 
 #endif

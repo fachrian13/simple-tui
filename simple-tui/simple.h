@@ -237,7 +237,7 @@ namespace Simple {
 	};
 	class Text final : public Base::Renderable {
 	public:
-		Text(std::string&& value) :
+		Text(std::string value) :
 			value(std::move(value))
 		{
 		}
@@ -356,11 +356,11 @@ namespace Simple {
 	};
 	class Button final : public Base::Renderable, public Base::Focusable {
 	public:
-		Button(std::string&& name) :
+		Button(std::string name) :
 			name(std::move(name))
 		{
 		}
-		Button(std::string&& name, std::function<void()>&& logic) :
+		Button(std::string name, std::function<void()> logic) :
 			name(std::move(name)),
 			logic(std::move(logic))
 		{
@@ -400,7 +400,7 @@ namespace Simple {
 	class Input final : public Base::Renderable, public Base::Focusable {
 	public:
 		Input() = default;
-		Input(std::string&& placeholder) :
+		Input(std::string placeholder) :
 			placeholder(std::move(placeholder))
 		{
 		}
@@ -545,6 +545,128 @@ namespace Simple {
 		int xCursor = 0;
 		int yCursor = 0;;
 	};
+	class Dropdown final : public Base::Renderable, public Base::Focusable {
+	public:
+		Dropdown(std::vector<std::string> values) :
+			values(std::move(values))
+		{
+		}
+		Dropdown(std::vector<std::string> values, std::string placeholder) :
+			values(std::move(values)),
+			placeholder(std::move(placeholder))
+		{
+		}
+
+		void Init() override {
+			if (Renderable::Width == 0)
+				Renderable::Width = int(std::max_element(
+					this->values.begin(),
+					this->values.end(),
+					[](const std::string& a, const std::string& b) {
+						return a.size() < b.size();
+					}
+				)->size());
+			Renderable::Height = Focusable::Focused() ? std::min(7, int(this->values.size())) : 1;
+		}
+		void Render(Buffer& buf) override {
+			for (int y = Renderable::Dimension.Top; y < Renderable::Dimension.Bottom; ++y)
+				for (int x = Renderable::Dimension.Left; x < Renderable::Dimension.Right; ++x)
+					buf.At(y, x).Invert = true;
+
+			if (Focusable::Focused()) {
+				for (int x = Renderable::Dimension.Left, i = 0; x < Renderable::Dimension.Right; ++x, ++i)
+					buf.At(Renderable::Dimension.Top + this->yCursor, x).Invert = false;
+
+				for (int y = Renderable::Dimension.Top, i = this->textBegin; y < Renderable::Dimension.Bottom; ++y, ++i)
+					for (int x = Renderable::Dimension.Left, ii = 0; x < Renderable::Dimension.Right; ++x, ++ii)
+						if (ii < this->values.at(i).size())
+							buf.At(y, x).Value = this->values.at(i).at(ii);
+						else break;
+			}
+			else {
+				if (this->selectedValue.empty() && !this->placeholder.empty()) {
+					for (int y = Renderable::Dimension.Top, i = 0; y < Renderable::Dimension.Bottom; ++y) {
+						for (int x = Renderable::Dimension.Left; x < Renderable::Dimension.Right; ++x, ++i) {
+							if (i < this->placeholder.size()) {
+								buf.At(y, x).Italic = true;
+								buf.At(y, x).Value = this->placeholder.at(i);
+							}
+							else break;
+						}
+					}
+				}
+				else {
+					for (int y = Renderable::Dimension.Top, i = 0; y < Renderable::Dimension.Bottom; ++y)
+						for (int x = Renderable::Dimension.Left; x < Renderable::Dimension.Right; ++x, ++i)
+							if (i < this->selectedValue.size())
+								buf.At(y, x).Value = this->selectedValue.at(i);
+							else break;
+				}
+			}
+		}
+
+		bool OnKey(KEY_EVENT_RECORD key) override {
+			auto moveCursor = [&](int y) {
+				if (y > 0) {
+					if (this->yCursor < Renderable::Height - 1)
+						++this->yCursor;
+					else ++textBegin;
+				}
+				else if (y < 0) {
+					if (this->yCursor > 0)
+						--this->yCursor;
+					else --textBegin;
+				}
+				};
+
+			switch (key.wVirtualKeyCode) {
+			case VK_DOWN:
+				if (this->index < this->values.size() - 1) {
+					++this->index;
+					moveCursor(1);
+					return true;
+				}
+				return false;
+			case VK_UP:
+				if (this->index > 0) {
+					--this->index;
+					moveCursor(-1);
+					return true;
+				}
+				return false;
+			case VK_RETURN:
+				this->selectedValue = this->values.at(this->index);
+				return false;
+			default:
+				switch (key.uChar.AsciiChar) {
+				case 'j':
+					if (this->index < this->values.size() - 1) {
+						++this->index;
+						moveCursor(1);
+						return true;
+					}
+					return false;
+				case 'k':
+					if (this->index > 0) {
+						--this->index;
+						moveCursor(-1);
+						return true;
+					}
+					return false;
+				}
+			}
+
+			return false;
+		}
+
+	private:
+		std::string selectedValue;
+		std::string placeholder;
+		std::vector<std::string> values;
+		int index = 0;
+		int yCursor = 0;
+		int textBegin = 0;
+	};
 }
 
 template<class Type, class... Args>
@@ -594,6 +716,12 @@ std::shared_ptr<Simple::Input> Input() {
 }
 std::shared_ptr<Simple::Input> Input(std::string placeholder) {
 	return std::make_shared<Simple::Input>(std::move(placeholder));
+}
+std::shared_ptr<Simple::Dropdown> Dropdown(std::vector<std::string> value) {
+	return std::make_shared<Simple::Dropdown>(std::move(value));
+}
+std::shared_ptr<Simple::Dropdown> Dropdown(std::vector<std::string> value, std::string placeholder) {
+	return std::make_shared<Simple::Dropdown>(std::move(value), std::move(placeholder));
 }
 
 #endif

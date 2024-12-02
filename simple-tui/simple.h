@@ -1,4 +1,4 @@
-#ifndef _SIMPLE_TUI_
+﻿#ifndef _SIMPLE_TUI_
 #define _SIMPLE_TUI_
 #define NOMINMAX
 
@@ -317,7 +317,37 @@ namespace Simple {
 
 			this->objects.at(focusedObject)->Focused(flag);
 		}
-		bool OnKey(KEY_EVENT_RECORD) override {
+		bool OnKey(KEY_EVENT_RECORD key) override {
+			auto& focused = this->objects.at(this->focusedObject);
+
+			if (focused->OnKey(key))
+				return true;
+
+			if ((key.dwControlKeyState & SHIFT_PRESSED) && key.wVirtualKeyCode == VK_TAB) {
+				if (this->focusedObject > 0) {
+					focused->Focused(false);
+					this->objects.at(--this->focusedObject)->Focused(true);
+					return true;
+				}
+			}
+			else {
+				if (key.wVirtualKeyCode == VK_RIGHT || key.wVirtualKeyCode == VK_TAB || key.uChar.AsciiChar == 'l') {
+					if (this->focusedObject < this->objects.size() - 1) {
+						focused->Focused(false);
+						this->objects.at(++this->focusedObject)->Focused(true);
+						return true;
+					}
+				}
+
+				if (key.wVirtualKeyCode == VK_LEFT || key.uChar.AsciiChar == 'h') {
+					if (this->focusedObject > 0) {
+						focused->Focused(false);
+						this->objects.at(--this->focusedObject)->Focused(true);
+						return true;
+					}
+				}
+			}
+
 			return false;
 		}
 	private:
@@ -381,29 +411,139 @@ namespace Simple {
 			if (Renderable::Height == 0)
 				Renderable::Height = 1;
 		}
-		void Render(Buffer& buffer) override {
+		void Render(Buffer& buf) override {
 			for (int y = Renderable::Dimension.Top; y < Renderable::Dimension.Bottom; ++y)
 				for (int x = Renderable::Dimension.Left; x < Renderable::Dimension.Right; ++x)
-					buffer.At(y, x).Invert = true;
+					buf.At(y, x).Invert = true;
 
-			if (this->value.empty()) {
-				if (!this->placeholder.empty()) {
-					for (int y = Renderable::Dimension.Top, i = 0; y < Renderable::Dimension.Bottom; ++y) {
-						for (int x = Renderable::Dimension.Left; x < Renderable::Dimension.Right; ++x, ++i) {
-							if (i < this->placeholder.size()) {
-								buffer.At(y, x).Italic = true;
-								buffer.At(y, x).Value = this->placeholder.at(i);
-							}
-							else break;
+			if (Focusable::Focused())
+				buf.At(Renderable::Dimension.Top + this->yCursor, Renderable::Dimension.Left + this->xCursor).Invert = false;
+
+			if (this->value.empty() && !this->placeholder.empty()) {
+				for (int y = Renderable::Dimension.Top, i = 0; y < Renderable::Dimension.Bottom; ++y) {
+					for (int x = Renderable::Dimension.Left; x < Renderable::Dimension.Right; ++x, ++i) {
+						if (i < this->placeholder.size()) {
+							buf.At(y, x).Italic = true;
+							buf.At(y, x).Value = this->placeholder.at(i);
 						}
+						else break;
 					}
 				}
 			}
+			else if (this->Hide) {
+				for (int y = Renderable::Dimension.Top, i = this->textBegin; y < Renderable::Dimension.Bottom; ++y)
+					for (int x = Renderable::Dimension.Left; x < Renderable::Dimension.Right; ++x, ++i)
+						if (i < this->value.size())
+							buf.At(y, x).Value = u8"•";
+						else break;
+			}
+			else {
+				for (int y = Renderable::Dimension.Top, i = this->textBegin; y < Renderable::Dimension.Bottom; ++y)
+					for (int x = Renderable::Dimension.Left; x < Renderable::Dimension.Right; ++x, ++i)
+						if (i < this->value.size())
+							buf.At(y, x).Value = this->value.at(i);
+						else break;
+			}
 		}
+
+		bool OnKey(KEY_EVENT_RECORD key) override {
+			auto moveCursor = [&](int y, int x) {
+				if (x > 0) {
+					if (this->xCursor < Renderable::Width - 1)
+						++this->xCursor;
+					else if (this->yCursor < Renderable::Height - 1) {
+						this->xCursor = 0;
+						++this->yCursor;
+					}
+					else {
+						this->xCursor = 0;
+						this->textBegin += Renderable::Width;
+					}
+				}
+				else if (x < 0) {
+					if (this->xCursor > 0)
+						--this->xCursor;
+					else if (this->yCursor > 0) {
+						this->xCursor = Renderable::Width - 1;
+						--this->yCursor;
+					}
+					else {
+						this->xCursor = Renderable::Width - 1;
+						this->textBegin -= Renderable::Width;
+					}
+				}
+
+				if (y > 0) {
+					if (this->yCursor < Renderable::Height - 1)
+						++this->yCursor;
+					else this->textBegin += Renderable::Width;
+				}
+				else if (y < 0) {
+					if (this->yCursor > 0)
+						--this->yCursor;
+					else this->textBegin -= Renderable::Width;
+				}
+				};
+
+			switch (key.wVirtualKeyCode) {
+			case VK_LEFT:
+				if (this->index > 0) {
+					--this->index;
+					moveCursor(0, -1);
+					return true;
+				}
+				break;
+			case VK_UP:
+				if (this->index - Renderable::Width >= 0) {
+					this->index -= Renderable::Width;
+					moveCursor(-1, 0);
+					return true;
+				}
+				break;
+			case VK_RIGHT:
+				if (this->index < this->value.size()) {
+					++this->index;
+					moveCursor(0, 1);
+					return true;
+				}
+				break;
+			case VK_DOWN:
+				if (this->index + Renderable::Width <= this->value.size()) {
+					this->index += Renderable::Width;
+					moveCursor(1, 0);
+					return true;
+				}
+				break;
+			case VK_BACK:
+				if (this->index > 0) {
+					this->value.erase(this->value.begin() + --this->index);
+					moveCursor(0, -1);
+					return true;
+				}
+				break;
+			default:
+				if (this->Pattern(key.uChar.AsciiChar) && this->index < this->Limit) {
+					value.insert(value.begin() + index++, key.uChar.AsciiChar);
+					moveCursor(0, 1);
+					return true;
+				}
+			}
+
+			return false;
+		}
+
+	public:
+		bool Hide = false;
+		int Limit = std::numeric_limits<int>::max();
+		std::function<bool(int)> Pattern = [](int ch) { return ch > 0x1F && ch < 0x7F; };
 
 	private:
 		std::string value;
 		std::string placeholder;
+		int index = 0;
+		int textBegin = 0;
+		int xCursor = 0;
+		int yCursor = 0;;
 	};
 }
 

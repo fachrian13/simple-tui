@@ -11,14 +11,18 @@ int main() {
 	bool state = true;
 
 	HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
-	Buffer b = Buffer(100, 20, Pixel(Color::Default, Color::BrightRed));
+	Buffer b = Buffer(100, 20);
 
 	auto bClick = Button("Click Me!");
 	auto bFocused = Button("This button is focused", [&state]() { state = false; });
 	auto iText = Input();
+	iText->Hide = true;
 	auto iPlaceholder = Input("Placeholder");
 
-	auto vContainer = VContainer(bClick, bFocused, iText, iPlaceholder);
+	auto vContainer = VContainer(
+		HContainer(bClick, bFocused),
+		HContainer(iText, iPlaceholder)
+	);
 	vContainer->Focused(true);
 
 	while (state) {

@@ -1,10 +1,9 @@
 #ifndef _SIMPLE_TUI_
 #define _SIMPLE_TUI_
-#define NOMINMAX
 
+#include <memory>
 #include <string>
 #include <vector>
-#include <memory>
 
 namespace Simple {
 	enum Color : int {
@@ -137,7 +136,7 @@ namespace Simple {
 			for (const auto& node : this->nodes) {
 				node->Init();
 
-				Node::Width = std::max(this->Width, node->Width);
+				Node::Width = std::max(Node::Width, node->Width);
 				Node::Height += node->Height;
 			}
 		}
@@ -175,7 +174,7 @@ namespace Simple {
 				node->Init();
 
 				Node::Width += node->Width;
-				Node::Height = std::max(this->Height, node->Height);
+				Node::Height = std::max(Node::Height, node->Height);
 			}
 		}
 		void Set(Rect dimension) override {
@@ -212,8 +211,8 @@ namespace Simple {
 			Node::Height = 1;
 		}
 		void Render(Buffer& buffer) override {
-			for (int y = 0, i = 0; y < Node::Height; ++y)
-				for (int x = 0; x < Node::Width; ++x, ++i)
+			for (int y = Node::Dimension.Top, i = 0; y < Node::Dimension.Bottom; ++y)
+				for (int x = Node::Dimension.Left; x < Node::Dimension.Right; ++x, ++i)
 					buffer.At(y, x).Value = value.at(i);
 		}
 
@@ -226,7 +225,15 @@ template<class Type, class... Args>
 std::shared_ptr<Simple::Base::Node> VLayout(Type&& node, Args&&... nodes) {
 	return std::make_shared<Simple::VerticalLayout>(
 		Simple::Utils::ToVector<std::shared_ptr<Simple::Base::Node>>(
-			node, nodes...
+			std::forward<Type>(node), std::forward<Args>(nodes)...
+		)
+	);
+}
+template<class Type, class... Args>
+std::shared_ptr<Simple::Base::Node> HLayout(Type&& node, Args&&... nodes) {
+	return std::make_shared<Simple::HorizontalLayout>(
+		Simple::Utils::ToVector<std::shared_ptr<Simple::Base::Node>>(
+			std::forward<Type>(node), std::forward<Args>(nodes)...
 		)
 	);
 }

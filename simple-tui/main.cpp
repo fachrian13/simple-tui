@@ -75,6 +75,7 @@ int main() {
 	auto iPlaceholder = Input("Placeholder");
 	auto r1 = Radio();
 	auto r2 = Radio();
+	auto gR = MakeGroup(r1, r2);
 	auto c1 = CheckBox();
 	auto c2 = CheckBox();
 

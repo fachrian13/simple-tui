@@ -124,6 +124,7 @@ namespace Simple {
 		int Bottom = 0;
 	};
 
+	class SelectedGroup;
 	namespace Base {
 		class Renderable {
 		public:
@@ -161,6 +162,12 @@ namespace Simple {
 			virtual void Selected(bool flag) {
 				this->$ = flag;
 			}
+			void SetGroup(::Simple::SelectedGroup* group) {
+				this->Group = group;
+			}
+
+		protected:
+			::Simple::SelectedGroup* Group = nullptr;
 
 		private:
 			bool $ = false;
@@ -679,6 +686,22 @@ namespace Simple {
 		int yCursor = 0;
 		int textBegin = 0;
 	};
+	class SelectedGroup final {
+	public:
+		SelectedGroup(std::vector<std::shared_ptr<Base::Selectable>>&& objects) {
+			for (auto& object : objects) {
+				object->SetGroup(this);
+				this->objects.push_back(std::move(object));
+			}
+		}
+		void Clear() {
+			for (const auto& object : this->objects)
+				object->Selected(false);
+		}
+
+	private:
+		std::vector<std::shared_ptr<Base::Selectable>> objects;
+	};
 	class Radio final : public Base::Renderable, public Base::Focusable, public Base::Selectable {
 	public:
 		Radio() = default;
@@ -702,6 +725,9 @@ namespace Simple {
 
 		bool OnKey(KEY_EVENT_RECORD key) override {
 			if (key.wVirtualKeyCode == VK_RETURN || key.uChar.AsciiChar == ' ') {
+				if (Selectable::Group)
+					Selectable::Group->Clear();
+
 				Selectable::Selected(true);
 				return true;
 			}
@@ -732,6 +758,9 @@ namespace Simple {
 
 		bool OnKey(KEY_EVENT_RECORD key) override {
 			if (key.wVirtualKeyCode == VK_RETURN || key.uChar.AsciiChar == ' ') {
+				if (Selectable::Group)
+					Selectable::Group->Clear();
+
 				Selectable::Selected(!Selectable::Selected());
 				return true;
 			}
@@ -800,6 +829,14 @@ std::shared_ptr<Simple::Radio> Radio() {
 }
 std::shared_ptr<Simple::CheckBox> CheckBox() {
 	return std::make_shared<Simple::CheckBox>();
+}
+template<class... Args>
+Simple::SelectedGroup MakeGroup(Args&&... objects) {
+	return Simple::SelectedGroup(
+		Simple::Utils::ToVector<std::shared_ptr<Simple::Base::Selectable>>(
+			std::forward<Args>(objects)...
+		)
+	);
 }
 
 #endif

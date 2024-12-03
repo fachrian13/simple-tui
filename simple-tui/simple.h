@@ -156,6 +156,11 @@ namespace Simple {
 		};
 		class Selectable {
 		public:
+			Selectable() = default;
+			Selectable(std::string name) :
+				Name(std::move(name))
+			{
+			}
 			bool Selected() {
 				return this->$;
 			}
@@ -165,8 +170,12 @@ namespace Simple {
 			void SetGroup(::Simple::SelectedGroup* group) {
 				this->Group = group;
 			}
+			std::string GetName() {
+				return this->Name;
+			}
 
 		protected:
+			std::string Name;
 			::Simple::SelectedGroup* Group = nullptr;
 
 		private:
@@ -268,7 +277,7 @@ namespace Simple {
 		void Render(Buffer& buffer) override {
 			for (int y = Renderable::Dimension.Top, i = 0; y < Renderable::Dimension.Bottom; ++y)
 				for (int x = Renderable::Dimension.Left; x < Renderable::Dimension.Right; ++x, ++i)
-					buffer.At(y, x).Value = value.at(i);
+					buffer.At(y, x).Value = this->value.at(i);
 		}
 
 	private:
@@ -405,8 +414,10 @@ namespace Simple {
 		bool OnKey(KEY_EVENT_RECORD key) override {
 			switch (key.wVirtualKeyCode) {
 			case VK_RETURN:
-				this->logic();
-				return true;
+				if (this->logic) {
+					this->logic();
+					return true;
+				}
 			}
 
 			return false;
@@ -705,14 +716,22 @@ namespace Simple {
 	class Radio final : public Base::Renderable, public Base::Focusable, public Base::Selectable {
 	public:
 		Radio() = default;
+		Radio(std::string name) :
+			Selectable(std::move(name))
+		{
+		}
 
 		void Init() override {
-			Renderable::Width = 3;
+			Renderable::Width = 3 + int(Selectable::Name.size());
 			Renderable::Height = 1;
 		}
 		void Render(Buffer& buffer) override {
 			buffer.At(Renderable::Dimension.Top, Renderable::Dimension.Left).Value = "(";
-			buffer.At(Renderable::Dimension.Top, Renderable::Dimension.Right - 1).Value = ")";
+			buffer.At(Renderable::Dimension.Top, Renderable::Dimension.Left + 2).Value = ")";
+
+			for (int y = Renderable::Dimension.Top, i = 0; y < Renderable::Dimension.Bottom; ++y)
+				for (int x = Renderable::Dimension.Left + 3; x < Renderable::Dimension.Right; ++x, ++i)
+					buffer.At(y, x).Value = Selectable::Name.at(i);
 
 			if (Selectable::Selected())
 				buffer.At(Renderable::Dimension.Top, Renderable::Dimension.Left + 1).Value = u8"\u25CF";
@@ -738,14 +757,22 @@ namespace Simple {
 	class CheckBox final : public Base::Renderable, public Base::Focusable, public Base::Selectable {
 	public:
 		CheckBox() = default;
+		CheckBox(std::string name) :
+			Selectable(std::move(name))
+		{
+		}
 
 		void Init() override {
-			Renderable::Width = 3;
+			Renderable::Width = 3 + int(Selectable::Name.size());
 			Renderable::Height = 1;
 		}
 		void Render(Buffer& buffer) override {
 			buffer.At(Renderable::Dimension.Top, Renderable::Dimension.Left).Value = "[";
-			buffer.At(Renderable::Dimension.Top, Renderable::Dimension.Right - 1).Value = "]";
+			buffer.At(Renderable::Dimension.Top, Renderable::Dimension.Left + 2).Value = "]";
+
+			for (int y = Renderable::Dimension.Top, i = 0; y < Renderable::Dimension.Bottom; ++y)
+				for (int x = Renderable::Dimension.Left + 3; x < Renderable::Dimension.Right; ++x, ++i)
+					buffer.At(y, x).Value = Selectable::Name.at(i);
 
 			if (Selectable::Selected())
 				buffer.At(Renderable::Dimension.Top, Renderable::Dimension.Left + 1).Value = u8"\u25A0";
@@ -827,8 +854,14 @@ std::shared_ptr<Simple::Dropdown> Dropdown(std::vector<std::string> value, std::
 std::shared_ptr<Simple::Radio> Radio() {
 	return std::make_shared<Simple::Radio>();
 }
+std::shared_ptr<Simple::Radio> Radio(std::string name) {
+	return std::make_shared<Simple::Radio>(std::move(name));
+}
 std::shared_ptr<Simple::CheckBox> CheckBox() {
 	return std::make_shared<Simple::CheckBox>();
+}
+std::shared_ptr<Simple::CheckBox> CheckBox(std::string name) {
+	return std::make_shared<Simple::CheckBox>(std::move(name));
 }
 template<class... Args>
 Simple::SelectedGroup MakeGroup(Args&&... objects) {

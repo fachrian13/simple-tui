@@ -1,121 +1,140 @@
-﻿#include <iostream>
-#include "simple.h"
+﻿#include "simple.h"
+#include <iostream>
 
-using Simple::Buffer;
-using Simple::Pixel;
-using Simple::Color;
+void Render(Simple::Buffer& buffer, std::shared_ptr<Simple::Base::Renderable>& object) {
+	object->Init();
+	object->Set({ 0, 0, object->Width, object->Height });
+	object->Render(buffer);
+	std::cout << buffer.ToString() << "\x1b[H" << std::flush;
+	buffer.Clear();
+}
 
 int main() {
 	SetConsoleOutputCP(CP_UTF8);
 
-	bool state = true;
+	bool loop = true;
 
-	HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
-	Buffer b = Buffer(100, 20);
+	auto iNamaDepan = Input("Nama Depan");
+	iNamaDepan->Width = 20;
+	auto iNamaBelakang = Input("Nama Belakang");
+	iNamaBelakang->Width = 20;
+	auto rLakiLaki = Radio("Laki-laki");
+	auto rPerempuan = Radio("Perempuan");
+	auto grJenisKelamin = MakeGroup(rLakiLaki, rPerempuan);
+	auto iAlamat = Input("Jalan ...");
+	iAlamat->Width = 41;
+	iAlamat->Height = 3;
+	auto rIslam = Radio("Islam");
+	auto rKristen1 = Radio("Kristen Protestan");
+	auto rKristen2 = Radio("Kristen Katolik");
+	auto rHindu = Radio("Hindu");
+	auto rBuddha = Radio("Buddha");
+	auto rKonghuchu = Radio("Konghuchu");
+	auto grAgama = MakeGroup(rIslam, rKristen1, rKristen2, rHindu, rBuddha, rKonghuchu);
+	auto dJurusan = Dropdown({
+			"Teknologi Pendidikan",
+			"Administrasi Pendidikan",
+			"Manajemen Pendidikan",
+			"Psikologi Pendidikan dan Bimbingan",
+			"Pendidikan Masyarakat",
+			"Pendidikan Khusus",
+			"Bimbingan dan Konseling",
+			"Perpustakaan& Sains Informasi",
+			"Pendidikan Guru Sekolah Dasar(PGSD)",
+			"Pendidikan Guru Anak Usia Dini(PAUD)",
+			"Pendidikan Luar Sekolah(PLS)",
+			"Pendidikan Luar Biasa",
+			"Pendidikan Bahasa Indonesia",
+			"Pendidikan Bahasa Daerah",
+			"Pendidikan Bahasa Inggris",
+			"Pendidikan Bahasa Arab",
+			"Pendidikan Bahasa Jepang",
+			"Pendidikan Bahasa Jerman",
+			"Pendidikan Bahasa Prancis",
+			"Pendidikan Bahasa Korea",
+			"Pendidikan Pancasila dan Kewarganegaraan",
+			"Pendidikan Sejarah",
+			"Pendidikan Geografi",
+			"Pendidikan Sosiologi",
+			"Pendidikan IPS",
+			"Pendidikan Agama Islam",
+			"Manajemen Pemasaran Pariwisata",
+			"Pendidikan Matematika",
+			"Pendidikan Fisika",
+			"Pendidikan Biologi",
+			"Pendidikan Kimia",
+			"Pendidikan IPA",
+			"Pendidikan Ilmu Komputer",
+			"Pendidikan Seni Rupa",
+			"Pendidikan Seni Tari",
+			"Pendidikan Seni Musik",
+			"Pendidikan Kepelatihan Olahraga",
+			"Pendidikan Jasmani, Kesehatan, dan Rekreasi",
+			"Pendidikan Teknik Otomotif",
+			"Seni Rupa Murni",
+			"Seni Kriya",
+			"Seni Tari",
+			"Seni Musik",
+			"Desain dan Komunikasi Visual",
+			"Desain Interior",
+			"Desain Produk",
+			"Tata Kelola Seni",
+			"Film dan Televisi",
+			"Film dan Animasi",
+			"Musik",
+			"Tata Rias",
+			"Tata Busana",
+			"Tata Boga"
+		}, "Silakan Pilih");
+	dJurusan->Width = 41;
+	auto bDaftar = Button("Daftar");
+	auto bKeluar = Button("Keluar", [&loop]() { loop = false; });
 
-	auto bClick = Button("Click Me!");
-	auto bFocused = Button("This button is focused", [&state]() { state = false; });
-	auto dName = Dropdown(
-		{
-			"Royalty Navarro",
-			"Reid Malone",
-			"Skyler Quintana",
-			"Kelvin Camacho",
-			"Armani Spencer",
-			"Ace Kent",
-			"Jazmine Cain",
-			"Benson Hahn",
-			"Fallon Pugh",
-			"Judson Lucero",
-			"Ila Russo",
-			"Jamie Peralta",
-			"Malayah Stuart",
-			"Dion Molina",
-			"Alexandria Fernandez",
-			"Bentley Bass",
-			"Zahra Graves",
-			"Cesar Snyder",
-			"Callie Salazar",
-			"Brody Phan",
-			"Elsa Moreno",
-			"Myles Molina",
-			"Alexandria Medina",
-			"George Gillespie",
-			"Alianna Perry",
-			"Waylon Cline",
-			"Lina Montes",
-			"Darren Graves",
-			"Elle Correa",
-			"Zakai Correa",
-			"Valery Horton",
-			"Garrett Villarreal",
-			"Jazlyn Callahan",
-			"Quinton Keith",
-			"Elyse Vance",
-			"Casen Whitaker",
-			"Ivanna Haley",
-			"Leif Hunt",
-			"Genevieve Copeland",
-			"Axton McKee",
-			"Kori Bush",
-			"Tyson Fischer",
-			"Maci Briggs",
-			"Case McConnell",
-			"Denise Hull",
-			"Salem Fry",
-			"Clarissa Figueroa",
-			"Spencer Mullen",
-			"Shay Matthews",
-			"Preston Booker"
-		},
-		"Silakan Pilih"
+	auto vLayout = VLayout(
+		Text("======================================"),
+		Text("   PENDAFTARAN CALON MAHASISWA BARU"),
+		Text("======================================"),
+		Text(""),
+		Text("Nama Lengkap"),
+		HLayout(iNamaDepan, Text(" "), iNamaBelakang),
+		Text("Jenis Kelamin"),
+		HLayout(rLakiLaki, rPerempuan),
+		Text("Alamat Domisili"),
+		iAlamat,
+		Text("Agama"),
+		HLayout(rIslam, Text(" "), rKristen1, Text(" "), rKristen2),
+		HLayout(rHindu, Text(" "), rBuddha, Text(" "), rKonghuchu),
+		Text("Jurusan Kuliah"),
+		dJurusan,
+		bDaftar,
+		bKeluar
 	);
-	auto iText = Input();
-	iText->Hide = true;
-	auto iPlaceholder = Input("Placeholder");
-	auto r1 = Radio();
-	auto r2 = Radio();
-	auto gR = MakeGroup(r1, r2);
-	auto c1 = CheckBox();
-	auto c2 = CheckBox();
 
 	auto vContainer = VContainer(
-		HContainer(bClick, bFocused),
-		dName,
-		HContainer(iText, iPlaceholder),
-		r1,
-		r2,
-		c1,
-		c2
+		HContainer(iNamaDepan, iNamaBelakang),
+		HContainer(rLakiLaki, rPerempuan),
+		iAlamat,
+		HContainer(rIslam, rKristen1, rKristen2),
+		HContainer(rHindu, rBuddha, rKonghuchu),
+		dJurusan,
+		bDaftar,
+		bKeluar
 	);
 	vContainer->Focused(true);
 
-	auto home = VLayout(
-		Text("Vertical 1 "),
-		Text("Vertical 2 "),
-		HLayout(bClick, bFocused),
-		dName,
-		HLayout(iText, Text(" "), iPlaceholder),
-		r1,
-		r2,
-		c1,
-		c2
-	);
+	auto buffer = Simple::Buffer(120, 30);
 
-	while (state) {
-		home->Init();
-		home->Set({ 0, 0, home->Width, home->Height });
-		home->Render(b);
-		std::cout << b.ToString() << "\x1b[H";
-		b.Clear();
+	HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
+	INPUT_RECORD record[128];
+	DWORD size;
 
-		INPUT_RECORD rec[128];
-		DWORD size;
-		ReadConsoleInput(hIn, rec, 128, &size);
+	while (loop) {
+		Render(buffer, vLayout);
 
+		ReadConsoleInput(hIn, record, 128, &size);
 		for (DWORD i = 0; i < size; ++i)
-			if (rec[i].EventType == KEY_EVENT && rec[i].Event.KeyEvent.bKeyDown)
-				vContainer->OnKey(rec[i].Event.KeyEvent);
+			if (record[i].EventType == KEY_EVENT && record[i].Event.KeyEvent.bKeyDown)
+				vContainer->OnKey(record[i].Event.KeyEvent);
 	}
 
 	return 0;

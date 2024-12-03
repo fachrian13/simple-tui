@@ -15,14 +15,14 @@ int main() {
 	bool loop = true;
 
 	auto iNamaDepan = Input("Nama Depan");
-	iNamaDepan->Width = 20;
+	iNamaDepan->Width = 24;
 	auto iNamaBelakang = Input("Nama Belakang");
-	iNamaBelakang->Width = 20;
+	iNamaBelakang->Width = 23;
 	auto rLakiLaki = Radio("Laki-laki");
 	auto rPerempuan = Radio("Perempuan");
 	auto grJenisKelamin = MakeGroup(rLakiLaki, rPerempuan);
 	auto iAlamat = Input("Jalan ...");
-	iAlamat->Width = 41;
+	iAlamat->Width = 48;
 	iAlamat->Height = 3;
 	auto rIslam = Radio("Islam");
 	auto rKristen1 = Radio("Kristen Protestan");
@@ -86,15 +86,14 @@ int main() {
 			"Tata Busana",
 			"Tata Boga"
 		}, "Silakan Pilih");
-	dJurusan->Width = 41;
+	dJurusan->Width = 48;
+	auto cTerm = CheckBox("Saya telah membaca peraturan");
+	auto cTerm1 = CheckBox("Saya setuju dengan peraturan Univertsitas");
 	auto bDaftar = Button("Daftar");
 	auto bKeluar = Button("Keluar", [&loop]() { loop = false; });
 
 	auto vLayout = VLayout(
-		Text("======================================"),
-		Text("   PENDAFTARAN CALON MAHASISWA BARU"),
-		Text("======================================"),
-		Text(""),
+		Text("       PENDAFTARAN CALON MAHASISWA BARU       ") | Border,
 		Text("Nama Lengkap"),
 		HLayout(iNamaDepan, Text(" "), iNamaBelakang),
 		Text("Jenis Kelamin"),
@@ -108,9 +107,11 @@ int main() {
 		),
 		Text("Jurusan Kuliah"),
 		dJurusan,
+		cTerm,
+		cTerm1,
 		bDaftar,
 		bKeluar
-	);
+	) | Border;
 
 	auto vContainer = VContainer(
 		HContainer(iNamaDepan, iNamaBelakang),
@@ -119,6 +120,8 @@ int main() {
 		HContainer(rIslam, rKristen1, rKristen2),
 		HContainer(rHindu, rBuddha, rKonghuchu),
 		dJurusan,
+		cTerm,
+		cTerm1,
 		bDaftar,
 		bKeluar
 	);
@@ -130,6 +133,7 @@ int main() {
 	INPUT_RECORD record[128];
 	DWORD size;
 
+	std::cout << "\x1b[?25l";
 	while (loop) {
 		Render(buffer, vLayout);
 

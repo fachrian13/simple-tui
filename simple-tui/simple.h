@@ -217,6 +217,9 @@ namespace Simple {
 		}
 
 		void Init() override {
+			Renderable::Width = 0;
+			Renderable::Height = 0;
+
 			for (const auto& object : this->objects) {
 				object->Init();
 
@@ -254,6 +257,9 @@ namespace Simple {
 		}
 
 		void Init() override {
+			Renderable::Width = 0;
+			Renderable::Height = 0;
+
 			for (const auto& object : this->objects) {
 				object->Init();
 

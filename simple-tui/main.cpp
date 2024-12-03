@@ -21,6 +21,10 @@ int main() {
 	auto rLakiLaki = Radio("Laki-laki");
 	auto rPerempuan = Radio("Perempuan");
 	auto grJenisKelamin = MakeGroup(rLakiLaki, rPerempuan);
+	auto iNomorTelepon = Input();
+	iNomorTelepon->Width = 48;
+	iNomorTelepon->Limit = 13;
+	iNomorTelepon->Pattern = isdigit;
 	auto iAlamat = Input("Jalan ...");
 	iAlamat->Width = 48;
 	iAlamat->Height = 3;
@@ -87,6 +91,15 @@ int main() {
 			"Tata Boga"
 		}, "Silakan Pilih");
 	dJurusan->Width = 48;
+	auto iUsername = Input("John Doe");
+	iUsername->Width = 48;
+	iUsername->Limit = 16;
+	iUsername->Pattern = isalnum;
+	auto iPassword = Input("");
+	iPassword->Width = 48;
+	iPassword->Limit = 32;
+	iPassword->Hide = true;
+	iPassword->Pattern = [](char ch) { return isprint(ch) && !isspace(ch); };
 	auto cTerm = CheckBox("Saya telah membaca peraturan");
 	auto cTerm1 = CheckBox("Saya setuju dengan peraturan Univertsitas");
 	auto bDaftar = Button("Daftar");
@@ -98,6 +111,8 @@ int main() {
 		HLayout(iNamaDepan, Text(" "), iNamaBelakang),
 		Text("Jenis Kelamin"),
 		HLayout(rLakiLaki, rPerempuan),
+		Text("Nomor Telepon"),
+		iNomorTelepon,
 		Text("Alamat Domisili"),
 		iAlamat,
 		Text("Agama"),
@@ -107,6 +122,10 @@ int main() {
 		),
 		Text("Jurusan Kuliah"),
 		dJurusan,
+		Text("Username"),
+		iUsername,
+		Text("Password"),
+		iPassword,
 		cTerm,
 		cTerm1,
 		bDaftar,
@@ -116,10 +135,13 @@ int main() {
 	auto vContainer = VContainer(
 		HContainer(iNamaDepan, iNamaBelakang),
 		HContainer(rLakiLaki, rPerempuan),
+		iNomorTelepon,
 		iAlamat,
 		HContainer(rIslam, rKristen1, rKristen2),
 		HContainer(rHindu, rBuddha, rKonghuchu),
 		dJurusan,
+		iUsername,
+		iPassword,
 		cTerm,
 		cTerm1,
 		bDaftar,

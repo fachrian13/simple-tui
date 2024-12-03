@@ -4,6 +4,7 @@
 
 #include <functional>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <vector>
 #include <windows.h>
@@ -73,39 +74,42 @@ namespace Simple {
 		{
 		}
 		Pixel& At(size_t y, size_t x) {
-			return this->pixels.at(y * this->width + x);
+			static Pixel defaultPixel;
+
+			if (y < height && x < width)
+				return this->pixels.at(y * this->width + x);
+
+			return defaultPixel;
 		}
 		std::string ToString() {
-			std::string result;
+			std::ostringstream result;
 
 			for (int y = 0; y < this->height; ++y) {
 				for (int x = 0; x < this->width; ++x) {
 					Pixel& p = this->pixels.at(y * this->width + x);
 
-					result += "\x1b[";
-					result += p.Bold ? "1;" : "22;";
-					result += p.Dim ? "2;" : "22;";
-					result += p.Italic ? "3;" : "23;";
-					result += p.Underline ? "4;" : "24;";
-					result += p.Blink ? "5;" : "25;";
-					result += p.Invert ? "7;" : "27;";
-					result += p.Invisible ? "8;" : "28;";
-					result += p.Strikethrough ? "9;" : "29;";
-					result += std::to_string(p.Foreground);
-					result += ";";
-					result += std::to_string(p.Background + 10);
-					result += "m";
-					result += p.Value;
+					result << "\x1b["
+						<< (p.Bold ? "1;" : "22;")
+						<< (p.Dim ? "2;" : "22;")
+						<< (p.Italic ? "3;" : "23;")
+						<< (p.Underline ? "4;" : "24;")
+						<< (p.Blink ? "5;" : "25;")
+						<< (p.Invert ? "7;" : "27;")
+						<< (p.Invisible ? "8;" : "28;")
+						<< (p.Strikethrough ? "9;" : "29;")
+						<< std::to_string(p.Foreground) << ";"
+						<< std::to_string(p.Background + 10) << "m"
+						<< p.Value;
 				}
 
-				result += "\n";
+				if (y < this->height - 1)
+					result << "\n";
 			}
 
-			result.pop_back();
-			result += "\x1b[m";
-
-			return result;
+			result << "\x1b[m";
+			return result.str();
 		}
+
 		void Clear() {
 			this->pixels = std::vector<Pixel>(this->width * this->height, this->style);
 		}

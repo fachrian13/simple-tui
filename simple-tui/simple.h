@@ -1,465 +1,353 @@
-#ifndef _SIMPLE_TUI_
+﻿#ifndef _SIMPLE_TUI_
 #define _SIMPLE_TUI_
 #define NOMINMAX
 
-#include <algorithm>
 #include <functional>
 #include <memory>
 #include <string>
 #include <vector>
 #include <windows.h>
 
-namespace simple {
-	enum COLOR : int {
-		BLACK = 30,
-		RED = 31,
-		GREEN = 32,
-		YELLOW = 33,
-		BLUE = 34,
-		MAGENTA = 35,
-		CYAN = 36,
-		WHITE = 37,
-		DEFAULT = 39,
-		BRIGHT_BLACK = 90,
-		BRIGHT_RED = 91,
-		BRIGHT_GREEN = 92,
-		BRIGHT_YELLOW = 93,
-		BRIGHT_BLUE = 94,
-		BRIGHT_MAGENTA = 95,
-		BRIGHT_CYAN = 96,
-		BRIGHT_WHITE = 97
+namespace Simple {
+	enum Color : int {
+		Black = 30,
+		Red = 31,
+		Green = 32,
+		Yellow = 33,
+		Blue = 34,
+		Magenta = 35,
+		Cyan = 36,
+		White = 37,
+		Default = 39,
+		BrightBlack = 90,
+		BrightRed = 91,
+		BrightGreen = 92,
+		BrightYellow = 93,
+		BrightBlue = 94,
+		BrightMagenta = 95,
+		BrightCyan = 96,
+		BrightWhite = 97
 	};
-	class pixel final {
+
+	class Pixel final {
 	public:
-		pixel() = default;
-		pixel(COLOR background, COLOR foreground) :
-			background(background),
-			foreground(foreground)
+		Pixel() = default;
+		Pixel(Color background, Color foreground) :
+			Background(background),
+			Foreground(foreground)
 		{
 		}
-		pixel(COLOR background, COLOR foreground, char value) :
-			background(background),
-			foreground(foreground),
-			value(value)
+		Pixel(Color background, Color foreground, std::string value) :
+			Background(background),
+			Foreground(foreground),
+			Value(value)
 		{
 		}
 
 	public:
-		bool bold = false;
-		bool dim = false;
-		bool italic = false;
-		bool underline = false;
-		bool blink = false;
-		bool invert = false;
-		bool invisible = false;
-		bool strikethrough = false;
-		COLOR background = COLOR::DEFAULT;
-		COLOR foreground = COLOR::DEFAULT;
-		char value = ' ';
+		bool Bold = false;
+		bool Dim = false;
+		bool Italic = false;
+		bool Underline = false;
+		bool Blink = false;
+		bool Invert = false;
+		bool Invisible = false;
+		bool Strikethrough = false;
+		Color Background = Color::Default;
+		Color Foreground = Color::Default;
+		std::string Value = " ";
 	};
-	class buffer final {
+	class Buffer final {
 	public:
-		buffer(int width, int height) :
+		Buffer(int width, int height) :
 			width(width),
 			height(height),
 			pixels(width* height)
 		{
 		}
-		buffer(int width, int height, pixel style) :
+		Buffer(int width, int height, Pixel style) :
 			width(width),
 			height(height),
 			style(style),
 			pixels(width* height, style)
 		{
 		}
-
-		pixel& at(size_t y, size_t x) {
+		Pixel& At(size_t y, size_t x) {
 			return this->pixels.at(y * this->width + x);
 		}
-		std::string toString() {
+		std::string ToString() {
 			std::string result;
 
 			for (int y = 0; y < this->height; ++y) {
 				for (int x = 0; x < this->width; ++x) {
-					pixel& p = this->pixels.at(y * this->width + x);
+					Pixel& p = this->pixels.at(y * this->width + x);
 
-					result.append("\x1b[");
-					result.append(p.bold ? "1;" : "22;");
-					result.append(p.dim ? "2;" : "22;");
-					result.append(p.italic ? "3;" : "23;");
-					result.append(p.underline ? "4;" : "24;");
-					result.append(p.blink ? "5;" : "25;");
-					result.append(p.invert ? "7;" : "27;");
-					result.append(p.invisible ? "8;" : "28;");
-					result.append(p.strikethrough ? "9;" : "29;");
-					result.append(std::to_string(p.foreground) + ";");
-					result.append(std::to_string(p.background + 10) + "m");
-					result.push_back(p.value);
+					result += "\x1b[";
+					result += p.Bold ? "1;" : "22;";
+					result += p.Dim ? "2;" : "22;";
+					result += p.Italic ? "3;" : "23;";
+					result += p.Underline ? "4;" : "24;";
+					result += p.Blink ? "5;" : "25;";
+					result += p.Invert ? "7;" : "27;";
+					result += p.Invisible ? "8;" : "28;";
+					result += p.Strikethrough ? "9;" : "29;";
+					result += std::to_string(p.Foreground);
+					result += ";";
+					result += std::to_string(p.Background + 10);
+					result += "m";
+					result += p.Value;
 				}
-				result.push_back('\n');
+
+				result += "\n";
 			}
+
 			result.pop_back();
-			result.append("\x1b[m");
+			result += "\x1b[m";
 
 			return result;
 		}
-		int getWidth() {
-			return this->width;
-		}
-		int getHeight() {
-			return this->height;
-		}
-
-		void clear() {
-			this->pixels = std::vector<pixel>(this->width * this->height, this->style);
+		void Clear() {
+			this->pixels = std::vector<Pixel>(this->width * this->height, this->style);
 		}
 
 	private:
 		int width = 0;
 		int height = 0;
-		pixel style;
-		std::vector<pixel> pixels;
+		Pixel style;
+		std::vector<Pixel> pixels;
 	};
-	class rect final {
+	class Rect final {
 	public:
-		int left = 0;
-		int top = 0;
-		int right = 0;
-		int bottom = 0;
+		int Left = 0;
+		int Top = 0;
+		int Right = 0;
+		int Bottom = 0;
 	};
 
-	namespace base {
-		class node {
+	class SelectedGroup;
+	namespace Base {
+		class Renderable {
 		public:
-			virtual void init() {}
-			virtual void set(rect dimension) {
-				this->dimension = dimension;
+			virtual void Init() {}
+			virtual void Set(Rect dimension) {
+				this->Dimension = dimension;
 			}
-			virtual void render(buffer&) {}
+			virtual void Render(Buffer& buffer) {}
 
 		public:
-			int width = 0;
-			int height = 0;
-			rect dimension;
+			int Width = 0;
+			int Height = 0;
+			Rect Dimension;
 		};
-		class node_style : public node {
+		class Focusable {
 		public:
-			node_style(std::shared_ptr<node> target) :
-				target(std::move(target))
-			{
+			bool Focused() {
+				return this->$;
 			}
-
-			virtual void init() override {
-				this->target->init();
+			virtual void Focused(bool flag) {
+				this->$ = flag;
 			}
-			virtual void set(rect dimension) override {
-				this->target->set(dimension);
-			}
-			virtual void render(buffer& buf) override {
-				this->target->render(buf);
-			}
-
-		protected:
-			std::shared_ptr<node> target;
-		};
-		class component {
-		public:
-			bool focused() {
-				return this->focus;
-			}
-			virtual void focused(bool flag) {
-				this->focus = flag;
-			}
-			virtual bool onkey(KEY_EVENT_RECORD) {
+			virtual bool OnKey(KEY_EVENT_RECORD) {
 				return false;
 			}
 
 		private:
-			bool focus = false;
+			bool $ = false;
 		};
-		class buttons_group; class check_button {
+		class Selectable {
 		public:
-			check_button(std::string name) :
-				name(name)
+			Selectable() = default;
+			Selectable(std::string name) :
+				Name(std::move(name))
 			{
 			}
-			bool checked() {
-				return this->isChecked;
+			bool Selected() {
+				return this->$;
 			}
-			void checked(bool flag) {
-				this->isChecked = flag;
+			virtual void Selected(bool flag) {
+				this->$ = flag;
 			}
-			void setGroup(buttons_group* group) {
-				this->group = group;
+			void SetGroup(::Simple::SelectedGroup* group) {
+				this->Group = group;
 			}
-			virtual std::string getName() { return this->name; }
+			std::string GetName() {
+				return this->Name;
+			}
 
 		protected:
-			buttons_group* group = nullptr;
-			std::string name;
+			std::string Name;
+			::Simple::SelectedGroup* Group = nullptr;
 
 		private:
-			bool isChecked = false;
+			bool $ = false;
 		};
-		class buttons_group final {
+		class Modifier : public Renderable {
 		public:
-			buttons_group(std::vector<std::shared_ptr<check_button>> buttons) {
-				for (const auto& button : buttons) {
-					button->setGroup(this);
-					this->buttons.push_back(std::move(button));
-				}
-			}
-			void clear() {
-				for (const auto& button : this->buttons)
-					button->checked(false);
-			}
-			std::shared_ptr<check_button> selected() {
-				for (const auto& button : this->buttons)
-					if (button->checked())
-						return button;
-
-				return nullptr;
+			Modifier(std::shared_ptr<Renderable>&& object) :
+				Object(std::move(object))
+			{
 			}
 
-		private:
-			std::vector<std::shared_ptr<check_button>> buttons;
+			virtual void Init() override {
+				this->Object->Init();
+			}
+			virtual void Set(Rect dimension) override {
+				this->Object->Set(dimension);
+			}
+			virtual void Render(Buffer& buffer) override {
+				this->Object->Render(buffer);
+			}
+
+		protected:
+			std::shared_ptr<Renderable> Object;
 		};
 	}
-	using buttons_group = base::buttons_group;
+	namespace Utils {
+		template<class Type, class... Args>
+		std::vector<Type> ToVector(Args&&... value) {
+			return std::vector<Type>{std::forward<Type>(value)...};
+		}
+	}
 
-	class vertical_layout final : public base::node {
+	class VerticalLayout final : public Base::Renderable {
 	public:
-		vertical_layout(std::vector<std::shared_ptr<base::node>> nodes) :
-			nodes(std::move(nodes))
+		VerticalLayout(std::vector<std::shared_ptr<Renderable>>&& objects) :
+			objects(std::move(objects))
 		{
 		}
 
-		void init() override {
-			for (const auto& node : this->nodes) {
-				node->init();
+		void Init() override {
+			Renderable::Width = 0;
+			Renderable::Height = 0;
 
-				node::width = std::max(node::width, node->width);
-				node::height += node->height;
+			for (const auto& object : this->objects) {
+				object->Init();
+
+				Renderable::Width = std::max(Renderable::Width, object->Width);
+				Renderable::Height += object->Height;
 			}
 		}
-		void set(rect dimension) override {
-			node::set(dimension);
+		void Set(Rect dimension) override {
+			Renderable::Set(dimension);
 
-			int top = dimension.top;
-			for (const auto& node : this->nodes) {
-				int left = dimension.left;
-				int right = left + node->width;
-				int bottom = top + node->height;
+			int t = Renderable::Dimension.Top;
+			for (const auto& object : this->objects) {
+				int l = Renderable::Dimension.Left;
+				int r = l + object->Width;
+				int b = t + object->Height;
 
-				node->set({ left, top, right, bottom });
+				object->Set({ l, t, r, b });
 
-				top = bottom;
+				t = b;
 			}
 		}
-		void render(buffer& buf) override {
-			for (const auto& node : this->nodes)
-				node->render(buf);
+		void Render(Buffer& buffer) override {
+			for (const auto& object : this->objects)
+				object->Render(buffer);
 		}
 
 	private:
-		std::vector<std::shared_ptr<base::node>> nodes;
+		std::vector<std::shared_ptr<Renderable>> objects;
 	};
-	class horizontal_layout final : public base::node {
+	class HorizontalLayout final : public Base::Renderable {
 	public:
-		horizontal_layout(std::vector<std::shared_ptr<base::node>> nodes) :
-			nodes(std::move(nodes))
+		HorizontalLayout(std::vector<std::shared_ptr<Renderable>>&& objects) :
+			objects(std::move(objects))
 		{
 		}
 
-		void init() override {
-			for (const auto& node : this->nodes) {
-				node->init();
+		void Init() override {
+			Renderable::Width = 0;
+			Renderable::Height = 0;
 
-				node::width += node->width;
-				node::height = std::max(node::height, node->height);
+			for (const auto& object : this->objects) {
+				object->Init();
+
+				Renderable::Width += object->Width;
+				Renderable::Height = std::max(Renderable::Height, object->Height);
 			}
 		}
-		void set(rect dimension) override {
-			node::set(dimension);
+		void Set(Rect dimension) override {
+			Renderable::Set(dimension);
 
-			int left = dimension.left;
-			for (const auto& node : this->nodes) {
-				int top = dimension.top;
-				int right = left + node->width;
-				int bottom = top + node->height;
+			int l = Renderable::Dimension.Left;
+			for (const auto& object : this->objects) {
+				int t = Renderable::Dimension.Top;
+				int r = l + object->Width;
+				int b = t + object->Height;
 
-				node->set({ left, top, right, bottom });
+				object->Set({ l, t, r, b });
 
-				left = right;
+				l = r;
 			}
 		}
-		void render(buffer& buf) override {
-			for (const auto& node : this->nodes)
-				node->render(buf);
+		void Render(Buffer& buffer) override {
+			for (const auto& object : this->objects)
+				object->Render(buffer);
 		}
 
 	private:
-		std::vector<std::shared_ptr<base::node>> nodes;
+		std::vector<std::shared_ptr<Renderable>> objects;
 	};
-	class text final : public base::node {
+	class Text final : public Base::Renderable {
 	public:
-		text(std::string text) :
-			value(text)
+		Text(std::string value) :
+			value(std::move(value))
 		{
 		}
 
-		void init() override {
-			node::width = int(this->value.size());
-			node::height = 1;
+		void Init() override {
+			Renderable::Width = int(this->value.size());
+			Renderable::Height = 1;
 		}
-		void render(buffer& buf) override {
-			for (int y = node::dimension.top, i = 0; y < node::dimension.bottom; ++y)
-				for (int x = node::dimension.left; x < node::dimension.right; ++x, ++i)
-					buf.at(y, x).value = this->value.at(i);
+		void Render(Buffer& buffer) override {
+			for (int y = Renderable::Dimension.Top, i = 0; y < Renderable::Dimension.Bottom; ++y)
+				for (int x = Renderable::Dimension.Left; x < Renderable::Dimension.Right; ++x, ++i)
+					buffer.At(y, x).Value = this->value.at(i);
 		}
 
 	private:
 		std::string value;
 	};
 
-	class border final : public base::node_style {
+	class VerticalContainer final : public Base::Focusable {
 	public:
-		border(std::shared_ptr<node> node) :
-			node_style(std::move(node))
+		VerticalContainer(std::vector<std::shared_ptr<Focusable>>&& objects) :
+			objects(std::move(objects))
 		{
 		}
 
-		void init() override {
-			node_style::init();
+		void Focused(bool flag) override {
+			Focusable::Focused(flag);
 
-			node::width = node_style::target->width + 2;
-			node::height = node_style::target->height + 2;
+			this->objects.at(focusedObject)->Focused(flag);
 		}
-		void set(rect dimension) override {
-			node::set(dimension);
+		bool OnKey(KEY_EVENT_RECORD key) override {
+			auto& focused = this->objects.at(this->focusedObject);
 
-			rect dim = node::dimension;
-			dim.left += 1;
-			dim.top += 1;
-			dim.right -= 1;
-			dim.bottom -= 1;
-			node_style::set(dim);
-		}
-		void render(buffer& buf) override {
-			node_style::render(buf);
-
-			buf.at(node::dimension.top, node::dimension.left).value = '+';
-			buf.at(node::dimension.top, node::dimension.right - 1).value = '+';
-			buf.at(node::dimension.bottom - 1, node::dimension.left).value = '+';
-			buf.at(node::dimension.bottom - 1, node::dimension.right - 1).value = '+';
-
-			for (int x = node::dimension.left + 1; x < node::dimension.right - 1; x++) {
-				buf.at(node::dimension.top, x).value = '-';
-				buf.at(node::dimension.bottom - 1, x).value = '-';
-			}
-
-			for (int y = node::dimension.top + 1; y < node::dimension.bottom - 1; ++y) {
-				buf.at(y, node::dimension.left).value = '|';
-				buf.at(y, node::dimension.right - 1).value = '|';
-			}
-		}
-	};
-	class background final : public base::node_style {
-	public:
-		background(std::shared_ptr<node> node, COLOR color) :
-			node_style(std::move(node)),
-			color(color)
-		{
-		}
-
-		void init() override {
-			node_style::init();
-
-			node::width = node_style::target->width;
-			node::height = node_style::target->height;
-		}
-		void set(rect dimension) override {
-			node::set(dimension);
-			node_style::set(dimension);
-		}
-		void render(buffer& buf) override {
-			node_style::render(buf);
-
-			for (int y = node::dimension.top; y < node::dimension.bottom; ++y)
-				for (int x = node::dimension.left; x < node::dimension.right; ++x)
-					buf.at(y, x).background = this->color;
-		}
-
-	private:
-		COLOR color = COLOR::DEFAULT;
-	};
-	class foreground final : public base::node_style {
-	public:
-		foreground(std::shared_ptr<node> node, COLOR color) :
-			node_style(std::move(node)),
-			color(color)
-		{
-		}
-
-		void init() override {
-			node_style::init();
-
-			node::width = node_style::target->width;
-			node::height = node_style::target->height;
-		}
-		void set(rect dimension) override {
-			node::set(dimension);
-			node_style::set(dimension);
-		}
-		void render(buffer& buf) override {
-			node_style::render(buf);
-
-			for (int y = node::dimension.top; y < node::dimension.bottom; ++y)
-				for (int x = node::dimension.left; x < node::dimension.right; ++x)
-					buf.at(y, x).foreground = this->color;
-		}
-
-	private:
-		COLOR color = COLOR::DEFAULT;
-	};
-
-	class vertical_container final : public base::component {
-	public:
-		vertical_container(std::vector<std::shared_ptr<component>> components) :
-			components(std::move(components))
-		{
-		}
-
-		void focused(bool flag) override {
-			component::focused(flag);
-			this->components.at(this->focusedComponent)->focused(flag);
-		}
-		bool onkey(KEY_EVENT_RECORD key) override {
-			auto& focused = this->components.at(this->focusedComponent);
-
-			if (focused->onkey(key))
+			if (focused->OnKey(key))
 				return true;
 
 			if ((key.dwControlKeyState & SHIFT_PRESSED) && key.wVirtualKeyCode == VK_TAB) {
-				if (this->focusedComponent > 0) {
-					focused->focused(false);
-					this->components.at(--this->focusedComponent)->focused(true);
+				if (this->focusedObject > 0) {
+					focused->Focused(false);
+					this->objects.at(--this->focusedObject)->Focused(true);
 					return true;
 				}
 			}
 			else {
 				if (key.wVirtualKeyCode == VK_DOWN || key.wVirtualKeyCode == VK_TAB || key.uChar.AsciiChar == 'j') {
-					if (this->focusedComponent < this->components.size() - 1) {
-						focused->focused(false);
-						this->components.at(++this->focusedComponent)->focused(true);
+					if (this->focusedObject < this->objects.size() - 1) {
+						focused->Focused(false);
+						this->objects.at(++this->focusedObject)->Focused(true);
 						return true;
 					}
 				}
 
 				if (key.wVirtualKeyCode == VK_UP || key.uChar.AsciiChar == 'k') {
-					if (this->focusedComponent > 0) {
-						focused->focused(false);
-						this->components.at(--this->focusedComponent)->focused(true);
+					if (this->focusedObject > 0) {
+						focused->Focused(false);
+						this->objects.at(--this->focusedObject)->Focused(true);
 						return true;
 					}
 				}
@@ -467,48 +355,48 @@ namespace simple {
 
 			return false;
 		}
-
 	private:
-		size_t focusedComponent = 0;
-		std::vector<std::shared_ptr<component>> components;
+		size_t focusedObject = 0;
+		std::vector<std::shared_ptr<Focusable>> objects;
 	};
-	class horizontal_container final : public base::component {
+	class HorizontalContainer final : public Base::Focusable {
 	public:
-		horizontal_container(std::vector<std::shared_ptr<component>> components) :
-			components(std::move(components))
+		HorizontalContainer(std::vector<std::shared_ptr<Focusable>>&& objects) :
+			objects(std::move(objects))
 		{
 		}
 
-		void focused(bool flag) override {
-			component::focused(flag);
-			this->components.at(this->focusedComponent)->focused(flag);
-		}
-		bool onkey(KEY_EVENT_RECORD key) override {
-			auto& focused = this->components.at(this->focusedComponent);
+		void Focused(bool flag) override {
+			Focusable::Focused(flag);
 
-			if (focused->onkey(key))
+			this->objects.at(focusedObject)->Focused(flag);
+		}
+		bool OnKey(KEY_EVENT_RECORD key) override {
+			auto& focused = this->objects.at(this->focusedObject);
+
+			if (focused->OnKey(key))
 				return true;
 
 			if ((key.dwControlKeyState & SHIFT_PRESSED) && key.wVirtualKeyCode == VK_TAB) {
-				if (this->focusedComponent > 0) {
-					focused->focused(false);
-					this->components.at(--this->focusedComponent)->focused(true);
+				if (this->focusedObject > 0) {
+					focused->Focused(false);
+					this->objects.at(--this->focusedObject)->Focused(true);
 					return true;
 				}
 			}
 			else {
 				if (key.wVirtualKeyCode == VK_RIGHT || key.wVirtualKeyCode == VK_TAB || key.uChar.AsciiChar == 'l') {
-					if (this->focusedComponent < this->components.size() - 1) {
-						focused->focused(false);
-						this->components.at(++this->focusedComponent)->focused(true);
+					if (this->focusedObject < this->objects.size() - 1) {
+						focused->Focused(false);
+						this->objects.at(++this->focusedObject)->Focused(true);
 						return true;
 					}
 				}
 
 				if (key.wVirtualKeyCode == VK_LEFT || key.uChar.AsciiChar == 'h') {
-					if (this->focusedComponent > 0) {
-						focused->focused(false);
-						this->components.at(--this->focusedComponent)->focused(true);
+					if (this->focusedObject > 0) {
+						focused->Focused(false);
+						this->objects.at(--this->focusedObject)->Focused(true);
 						return true;
 					}
 				}
@@ -516,42 +404,46 @@ namespace simple {
 
 			return false;
 		}
-
 	private:
-		size_t focusedComponent = 0;
-		std::vector<std::shared_ptr<component>> components;
+		size_t focusedObject = 0;
+		std::vector<std::shared_ptr<Focusable>> objects;
 	};
-	class button final : public base::node, public base::component {
+	class Button final : public Base::Renderable, public Base::Focusable {
 	public:
-		button(std::string name, std::function<void()> logic) :
-			name(name),
-			logic(logic)
+		Button(std::string name) :
+			name(std::move(name))
+		{
+		}
+		Button(std::string name, std::function<void()> logic) :
+			name(std::move(name)),
+			logic(std::move(logic))
 		{
 		}
 
-		void init() override {
-			node::width = int(this->name.size()) + 4;
-			node::height = 1;
+		void Init() override {
+			Renderable::Width = int(this->name.size()) + 2;
+			Renderable::Height = 1;
 		}
-		void render(buffer& buf) override {
-			if (component::focused()) {
-				for (int y = node::dimension.top; y < node::dimension.bottom; ++y)
-					for (int x = node::dimension.left; x < node::dimension.right; ++x)
-						buf.at(y, x).invert = true;
-			}
+		void Render(Buffer& buffer) override {
+			buffer.At(Renderable::Dimension.Top, Renderable::Dimension.Left).Value = "[";
+			buffer.At(Renderable::Dimension.Top, Renderable::Dimension.Right - 1).Value = "]";
+			for (int y = Renderable::Dimension.Top, i = 0; y < Renderable::Dimension.Bottom; ++y)
+				for (int x = Renderable::Dimension.Left + 1; x < Renderable::Dimension.Right - 1; ++x, ++i)
+					buffer.At(y, x).Value = this->name.at(i);
 
-			buf.at(node::dimension.top, node::dimension.left).value = '[';
-			buf.at(node::dimension.top, node::dimension.right - 1).value = ']';
-			for (int y = node::dimension.top, i = 0; y < node::dimension.bottom; ++y)
-				for (int x = node::dimension.left + 2; x < node::dimension.right - 2; ++x, ++i)
-					buf.at(y, x).value = this->name.at(i);
+			if (Focusable::Focused())
+				for (int y = Renderable::Dimension.Top; y < Renderable::Dimension.Bottom; ++y)
+					for (int x = Renderable::Dimension.Left; x < Renderable::Dimension.Right; ++x)
+						buffer.At(y, x).Invert = true;
 		}
 
-		bool onkey(KEY_EVENT_RECORD key) override {
+		bool OnKey(KEY_EVENT_RECORD key) override {
 			switch (key.wVirtualKeyCode) {
 			case VK_RETURN:
-				this->logic();
-				return true;
+				if (this->logic) {
+					this->logic();
+					return true;
+				}
 			}
 
 			return false;
@@ -561,93 +453,91 @@ namespace simple {
 		std::string name;
 		std::function<void()> logic;
 	};
-	class input final : public base::node, public base::component {
+	class Input final : public Base::Renderable, public Base::Focusable {
 	public:
-		input(std::string placeholder) :
-			placeholder(placeholder)
+		Input() = default;
+		Input(std::string placeholder) :
+			placeholder(std::move(placeholder))
 		{
 		}
-		const std::string getValue() {
-			return this->value;
-		}
 
-		void init() override {
-			if (node::width == 0)
-				node::width = 30;
-			if (node::height == 0)
-				node::height = 1;
+		void Init() override {
+			if (Renderable::Width == 0)
+				Renderable::Width = 30;
+			if (Renderable::Height == 0)
+				Renderable::Height = 1;
 		}
-		void render(buffer& buf) override {
-			for (int y = node::dimension.top; y < node::dimension.bottom; ++y)
-				for (int x = node::dimension.left; x < node::dimension.right; ++x)
-					buf.at(y, x).invert = true;
+		void Render(Buffer& buffer) override {
+			for (int y = Renderable::Dimension.Top; y < Renderable::Dimension.Bottom; ++y)
+				for (int x = Renderable::Dimension.Left; x < Renderable::Dimension.Right; ++x)
+					buffer.At(y, x).Invert = true;
 
-			if (component::focused())
-				buf.at(node::dimension.top + this->yCursor, node::dimension.left + this->xCursor).invert = false;
+			if (Focusable::Focused())
+				buffer.At(Renderable::Dimension.Top + this->yCursor, Renderable::Dimension.Left + this->xCursor).Invert = false;
 
 			if (this->value.empty() && !this->placeholder.empty()) {
-				for (int y = node::dimension.top, i = 0; y < node::dimension.bottom; ++y) {
-					for (int x = node::dimension.left; x < node::dimension.right; ++x, ++i) {
+				for (int y = Renderable::Dimension.Top, i = 0; y < Renderable::Dimension.Bottom; ++y) {
+					for (int x = Renderable::Dimension.Left; x < Renderable::Dimension.Right; ++x, ++i) {
 						if (i < this->placeholder.size()) {
-							buf.at(y, x).italic = true;
-							buf.at(y, x).value = this->placeholder.at(i);
+							buffer.At(y, x).Italic = true;
+							buffer.At(y, x).Value = this->placeholder.at(i);
 						}
 						else break;
 					}
 				}
 			}
-			else if (this->hide) {
-				for (int y = node::dimension.top, i = this->textBegin; y < node::dimension.bottom; ++y)
-					for (int x = node::dimension.left; x < node::dimension.right; ++x, ++i)
+			else if (this->Hide) {
+				for (int y = Renderable::Dimension.Top, i = this->textBegin; y < Renderable::Dimension.Bottom; ++y)
+					for (int x = Renderable::Dimension.Left; x < Renderable::Dimension.Right; ++x, ++i)
 						if (i < this->value.size())
-							buf.at(y, x).value = '*';
+							buffer.At(y, x).Value = u8"•";
 						else break;
 			}
 			else {
-				for (int y = node::dimension.top, i = this->textBegin; y < node::dimension.bottom; ++y)
-					for (int x = node::dimension.left; x < node::dimension.right; ++x, ++i)
+				for (int y = Renderable::Dimension.Top, i = this->textBegin; y < Renderable::Dimension.Bottom; ++y)
+					for (int x = Renderable::Dimension.Left; x < Renderable::Dimension.Right; ++x, ++i)
 						if (i < this->value.size())
-							buf.at(y, x).value = this->value.at(i);
+							buffer.At(y, x).Value = this->value.at(i);
 						else break;
 			}
 		}
 
-		bool onkey(KEY_EVENT_RECORD key) override {
+		bool OnKey(KEY_EVENT_RECORD key) override {
 			auto moveCursor = [&](int y, int x) {
 				if (x > 0) {
-					if (this->xCursor < node::width - 1)
+					if (this->xCursor < Renderable::Width - 1)
 						++this->xCursor;
-					else if (this->yCursor < node::height - 1) {
+					else if (this->yCursor < Renderable::Height - 1) {
 						this->xCursor = 0;
 						++this->yCursor;
 					}
 					else {
 						this->xCursor = 0;
-						this->textBegin += node::width;
+						this->textBegin += Renderable::Width;
 					}
 				}
 				else if (x < 0) {
 					if (this->xCursor > 0)
 						--this->xCursor;
 					else if (this->yCursor > 0) {
-						this->xCursor = node::width - 1;
+						this->xCursor = Renderable::Width - 1;
 						--this->yCursor;
 					}
 					else {
-						this->xCursor = node::width - 1;
-						this->textBegin -= node::width;
+						this->xCursor = Renderable::Width - 1;
+						this->textBegin -= Renderable::Width;
 					}
 				}
 
 				if (y > 0) {
-					if (this->yCursor < node::height - 1)
+					if (this->yCursor < Renderable::Height - 1)
 						++this->yCursor;
-					else this->textBegin += node::width;
+					else this->textBegin += Renderable::Width;
 				}
 				else if (y < 0) {
 					if (this->yCursor > 0)
 						--this->yCursor;
-					else this->textBegin -= node::width;
+					else this->textBegin -= Renderable::Width;
 				}
 				};
 
@@ -660,8 +550,8 @@ namespace simple {
 				}
 				break;
 			case VK_UP:
-				if (this->index - node::width >= 0) {
-					this->index -= node::width;
+				if (this->index - Renderable::Width >= 0) {
+					this->index -= Renderable::Width;
 					moveCursor(-1, 0);
 					return true;
 				}
@@ -674,8 +564,8 @@ namespace simple {
 				}
 				break;
 			case VK_DOWN:
-				if (this->index + node::width <= this->value.size()) {
-					this->index += node::width;
+				if (this->index + Renderable::Width <= this->value.size()) {
+					this->index += Renderable::Width;
 					moveCursor(1, 0);
 					return true;
 				}
@@ -688,7 +578,7 @@ namespace simple {
 				}
 				break;
 			default:
-				if (this->pattern(key.uChar.AsciiChar) && this->index < this->limit) {
+				if (this->Pattern(key.uChar.AsciiChar) && this->index < this->Limit) {
 					value.insert(value.begin() + index++, key.uChar.AsciiChar);
 					moveCursor(0, 1);
 					return true;
@@ -699,9 +589,9 @@ namespace simple {
 		}
 
 	public:
-		bool hide = false;
-		int limit = std::numeric_limits<int>::max();
-		std::function<bool(int)> pattern = [](int ch) { return ch > 0x1F && ch < 0x7F; };
+		bool Hide = false;
+		int Limit = std::numeric_limits<int>::max();
+		std::function<bool(int)> Pattern = [](int ch) { return ch > 0x1F && ch < 0x7F; };
 
 	private:
 		std::string value;
@@ -709,62 +599,72 @@ namespace simple {
 		int index = 0;
 		int textBegin = 0;
 		int xCursor = 0;
-		int yCursor = 0;
+		int yCursor = 0;;
 	};
-	class dropdown final : public base::node, public base::component {
+	class Dropdown final : public Base::Renderable, public Base::Focusable {
 	public:
-		dropdown(std::vector<std::string> values, std::string placeholder) :
-			values(values),
-			placeholder(placeholder)
+		Dropdown(std::vector<std::string> values) :
+			values(std::move(values))
+		{
+		}
+		Dropdown(std::vector<std::string> values, std::string placeholder) :
+			values(std::move(values)),
+			placeholder(std::move(placeholder))
 		{
 		}
 
-		void init() override {
-			if (node::width == 0)
-				node::width = int(std::max_element(this->values.begin(), this->values.end(), [](const std::string& a, const std::string& b) { return a.size() < b.size(); })->size());
-			node::height = component::focused() ? std::min(7, int(this->values.size())) : 1;
+		void Init() override {
+			if (Renderable::Width == 0)
+				Renderable::Width = int(std::max_element(
+					this->values.begin(),
+					this->values.end(),
+					[](const std::string& a, const std::string& b) {
+						return a.size() < b.size();
+					}
+				)->size());
+			Renderable::Height = Focusable::Focused() ? std::min(7, int(this->values.size())) : 1;
 		}
-		void render(buffer& buf) override {
-			for (int y = node::dimension.top; y < node::dimension.bottom; ++y)
-				for (int x = node::dimension.left; x < node::dimension.right; ++x)
-					buf.at(y, x).invert = true;
+		void Render(Buffer& buffer) override {
+			for (int y = Renderable::Dimension.Top; y < Renderable::Dimension.Bottom; ++y)
+				for (int x = Renderable::Dimension.Left; x < Renderable::Dimension.Right; ++x)
+					buffer.At(y, x).Invert = true;
 
-			if (component::focused()) {
-				for (int x = node::dimension.left, i = 0; x < node::dimension.right; ++x, ++i)
-					buf.at(node::dimension.top + this->yCursor, x).invert = false;
+			if (Focusable::Focused()) {
+				for (int x = Renderable::Dimension.Left, i = 0; x < Renderable::Dimension.Right; ++x, ++i)
+					buffer.At(Renderable::Dimension.Top + this->yCursor, x).Invert = false;
 
-				for (int y = node::dimension.top, i = this->textBegin; y < node::dimension.bottom; ++y, ++i)
-					for (int x = node::dimension.left, ii = 0; x < node::dimension.right; ++x, ++ii)
+				for (int y = Renderable::Dimension.Top, i = this->textBegin; y < Renderable::Dimension.Bottom; ++y, ++i)
+					for (int x = Renderable::Dimension.Left, ii = 0; x < Renderable::Dimension.Right; ++x, ++ii)
 						if (ii < this->values.at(i).size())
-							buf.at(y, x).value = this->values.at(i).at(ii);
+							buffer.At(y, x).Value = this->values.at(i).at(ii);
 						else break;
 			}
 			else {
 				if (this->selectedValue.empty() && !this->placeholder.empty()) {
-					for (int y = node::dimension.top, i = 0; y < node::dimension.bottom; ++y) {
-						for (int x = node::dimension.left; x < node::dimension.right; ++x, ++i) {
+					for (int y = Renderable::Dimension.Top, i = 0; y < Renderable::Dimension.Bottom; ++y) {
+						for (int x = Renderable::Dimension.Left; x < Renderable::Dimension.Right; ++x, ++i) {
 							if (i < this->placeholder.size()) {
-								buf.at(y, x).italic = true;
-								buf.at(y, x).value = this->placeholder.at(i);
+								buffer.At(y, x).Italic = true;
+								buffer.At(y, x).Value = this->placeholder.at(i);
 							}
 							else break;
 						}
 					}
 				}
 				else {
-					for (int y = node::dimension.top, i = 0; y < node::dimension.bottom; ++y)
-						for (int x = node::dimension.left; x < node::dimension.right; ++x, ++i)
+					for (int y = Renderable::Dimension.Top, i = 0; y < Renderable::Dimension.Bottom; ++y)
+						for (int x = Renderable::Dimension.Left; x < Renderable::Dimension.Right; ++x, ++i)
 							if (i < this->selectedValue.size())
-								buf.at(y, x).value = this->selectedValue.at(i);
+								buffer.At(y, x).Value = this->selectedValue.at(i);
 							else break;
 				}
 			}
 		}
 
-		bool onkey(KEY_EVENT_RECORD key) override {
+		bool OnKey(KEY_EVENT_RECORD key) override {
 			auto moveCursor = [&](int y) {
 				if (y > 0) {
-					if (this->yCursor < node::height - 1)
+					if (this->yCursor < Renderable::Height - 1)
 						++this->yCursor;
 					else ++textBegin;
 				}
@@ -823,185 +723,226 @@ namespace simple {
 		int yCursor = 0;
 		int textBegin = 0;
 	};
-	class radio final : public base::node, public base::component, public base::check_button {
+	class SelectedGroup final {
 	public:
-		radio(std::string name) :
-			check_button(name)
+		SelectedGroup(std::vector<std::shared_ptr<Base::Selectable>>&& objects) {
+			for (auto& object : objects) {
+				object->SetGroup(this);
+				this->objects.push_back(std::move(object));
+			}
+		}
+		void Clear() {
+			for (const auto& object : this->objects)
+				object->Selected(false);
+		}
+
+	private:
+		std::vector<std::shared_ptr<Base::Selectable>> objects;
+	};
+	class Radio final : public Base::Renderable, public Base::Focusable, public Base::Selectable {
+	public:
+		Radio() = default;
+		Radio(std::string name) :
+			Selectable(std::move(name))
 		{
 		}
-		std::string getName() {
-			return this->name;
+
+		void Init() override {
+			Renderable::Width = 3 + int(Selectable::Name.size());
+			Renderable::Height = 1;
+		}
+		void Render(Buffer& buffer) override {
+			buffer.At(Renderable::Dimension.Top, Renderable::Dimension.Left).Value = "(";
+			buffer.At(Renderable::Dimension.Top, Renderable::Dimension.Left + 2).Value = ")";
+
+			for (int y = Renderable::Dimension.Top, i = 0; y < Renderable::Dimension.Bottom; ++y)
+				for (int x = Renderable::Dimension.Left + 3; x < Renderable::Dimension.Right; ++x, ++i)
+					buffer.At(y, x).Value = Selectable::Name.at(i);
+
+			if (Selectable::Selected())
+				buffer.At(Renderable::Dimension.Top, Renderable::Dimension.Left + 1).Value = u8"\u25CF";
+
+			if (Focusable::Focused())
+				for (int y = Renderable::Dimension.Top; y < Renderable::Dimension.Bottom; ++y)
+					for (int x = Renderable::Dimension.Left; x < Renderable::Dimension.Right; ++x)
+						buffer.At(y, x).Invert = true;
 		}
 
-		void init() override {
-			node::width = !this->name.empty() ? int(this->name.size()) + 3 : 3;
-			node::height = 1;
-		}
-		void render(buffer& buf) override {
-			buf.at(node::dimension.top, node::dimension.left).value = '(';
-			buf.at(node::dimension.top, node::dimension.left + 2).value = ')';
-
-			if (!check_button::name.empty())
-				for (int y = node::dimension.top, i = 0; y < node::dimension.bottom; ++y)
-					for (int x = node::dimension.left + 3; x < node::dimension.right; ++x, ++i)
-						buf.at(y, x).value = check_button::name.at(i);
-
-			if (component::focused())
-				for (int y = node::dimension.top; y < node::dimension.bottom; ++y)
-					for (int x = node::dimension.left; x < node::dimension.right; ++x)
-						buf.at(y, x).invert = true;
-
-			if (check_button::checked())
-				buf.at(node::dimension.top, node::dimension.left + 1).value = '*';
-		}
-
-		bool onkey(KEY_EVENT_RECORD key) override {
+		bool OnKey(KEY_EVENT_RECORD key) override {
 			if (key.wVirtualKeyCode == VK_RETURN || key.uChar.AsciiChar == ' ') {
-				if (check_button::group)
-					check_button::group->clear();
+				if (Selectable::Group)
+					Selectable::Group->Clear();
 
-				check_button::checked(true);
+				Selectable::Selected(true);
 				return true;
 			}
 
 			return false;
 		}
 	};
-	class checkbox final : public base::node, public base::component, public base::check_button {
+	class CheckBox final : public Base::Renderable, public Base::Focusable, public Base::Selectable {
 	public:
-		checkbox(std::string name) :
-			check_button(name)
+		CheckBox() = default;
+		CheckBox(std::string name) :
+			Selectable(std::move(name))
 		{
 		}
-		std::string getName() {
-			return this->name;
+
+		void Init() override {
+			Renderable::Width = 3 + int(Selectable::Name.size());
+			Renderable::Height = 1;
+		}
+		void Render(Buffer& buffer) override {
+			buffer.At(Renderable::Dimension.Top, Renderable::Dimension.Left).Value = "[";
+			buffer.At(Renderable::Dimension.Top, Renderable::Dimension.Left + 2).Value = "]";
+
+			for (int y = Renderable::Dimension.Top, i = 0; y < Renderable::Dimension.Bottom; ++y)
+				for (int x = Renderable::Dimension.Left + 3; x < Renderable::Dimension.Right; ++x, ++i)
+					buffer.At(y, x).Value = Selectable::Name.at(i);
+
+			if (Selectable::Selected())
+				buffer.At(Renderable::Dimension.Top, Renderable::Dimension.Left + 1).Value = u8"\u25A0";
+
+			if (Focusable::Focused())
+				for (int y = Renderable::Dimension.Top; y < Renderable::Dimension.Bottom; ++y)
+					for (int x = Renderable::Dimension.Left; x < Renderable::Dimension.Right; ++x)
+						buffer.At(y, x).Invert = true;
 		}
 
-		void init() override {
-			node::width = !this->name.empty() ? int(this->name.size()) + 3 : 3;
-			node::height = 1;
-		}
-		void render(buffer& buf) override {
-			buf.at(node::dimension.top, node::dimension.left).value = '[';
-			buf.at(node::dimension.top, node::dimension.left + 2).value = ']';
-
-			if (!check_button::name.empty())
-				for (int y = node::dimension.top, i = 0; y < node::dimension.bottom; ++y)
-					for (int x = node::dimension.left + 3; x < node::dimension.right; ++x, ++i)
-						buf.at(y, x).value = check_button::name.at(i);
-
-			if (component::focused())
-				for (int y = node::dimension.top; y < node::dimension.bottom; ++y)
-					for (int x = node::dimension.left; x < node::dimension.right; ++x)
-						buf.at(y, x).invert = true;
-
-			if (check_button::checked())
-				buf.at(node::dimension.top, node::dimension.left + 1).value = '*';
-		}
-
-		bool onkey(KEY_EVENT_RECORD key) override {
+		bool OnKey(KEY_EVENT_RECORD key) override {
 			if (key.wVirtualKeyCode == VK_RETURN || key.uChar.AsciiChar == ' ') {
-				check_button::checked(!check_button::checked());
+				if (Selectable::Group)
+					Selectable::Group->Clear();
+
+				Selectable::Selected(!Selectable::Selected());
 				return true;
 			}
 
 			return false;
+		}
+	};
+
+	class Border final : public Base::Modifier {
+	public:
+		Border(std::shared_ptr<Renderable>&& object) :
+			Modifier(std::move(object))
+		{
+		}
+
+		void Init() override {
+			Modifier::Init();
+			Renderable::Width = Modifier::Object->Width + 2;
+			Renderable::Height = Modifier::Object->Height + 2;
+		}
+		void Set(Rect dimension) override {
+			Modifier::Set({ dimension.Left + 1, dimension.Top + 1, dimension.Right - 1, dimension.Bottom - 1 });
+			Renderable::Set(dimension);
+		}
+		void Render(Buffer& buffer) override {
+			Modifier::Render(buffer);
+
+			buffer.At(Renderable::Dimension.Top, Renderable::Dimension.Left).Value = u8"\u256D";
+			buffer.At(Renderable::Dimension.Top, Renderable::Dimension.Right - 1).Value = u8"\u256E";
+			buffer.At(Renderable::Dimension.Bottom - 1, Renderable::Dimension.Left).Value = u8"\u2570";
+			buffer.At(Renderable::Dimension.Bottom - 1, Renderable::Dimension.Right - 1).Value = u8"\u256F";
+
+			for (int x = Renderable::Dimension.Left + 1; x < Renderable::Dimension.Right - 1; ++x) {
+				buffer.At(Renderable::Dimension.Top, x).Value = u8"\u2500";
+				buffer.At(Renderable::Dimension.Bottom - 1, x).Value = u8"\u2500";
+			}
+
+			for (int y = Renderable::Dimension.Top + 1; y < Renderable::Dimension.Bottom - 1; ++y) {
+				buffer.At(y, Renderable::Dimension.Left).Value = u8"\u2502";
+				buffer.At(y, Renderable::Dimension.Right - 1).Value = u8"\u2502";
+			}
 		}
 	};
 }
 
-std::shared_ptr<simple::base::node> operator |(
-	std::shared_ptr<simple::base::node> left,
-	std::function<std::shared_ptr<simple::base::node>(std::shared_ptr<simple::base::node>)> nodeStyle
+std::shared_ptr<Simple::Base::Renderable> operator |(
+	std::shared_ptr<Simple::Base::Renderable>&& rval,
+	std::function<std::shared_ptr<Simple::Base::Renderable>(std::shared_ptr<Simple::Base::Renderable>)> nval
 	) {
-	return nodeStyle(std::move(left));
+	return nval(std::move(rval));
 }
 
-template<class T, class... A>
-std::shared_ptr<simple::base::node> vlayout(T node, A... args) {
-	std::vector<std::shared_ptr<simple::base::node>> nodes;
-
-	nodes.push_back(std::move(node));
-	((nodes.push_back(std::move(args))), ...);
-
-	return std::make_shared<simple::vertical_layout>(std::move(nodes));
+template<class Type, class... Args>
+std::shared_ptr<Simple::Base::Renderable> VLayout(Type&& object, Args&&... objects) {
+	return std::make_shared<Simple::VerticalLayout>(
+		Simple::Utils::ToVector<std::shared_ptr<Simple::Base::Renderable>>(
+			std::forward<Type>(object), std::forward<Args>(objects)...
+		)
+	);
 }
-template<class T, class... A>
-std::shared_ptr<simple::base::node> hlayout(T node, A... args) {
-	std::vector<std::shared_ptr<simple::base::node>> nodes;
-
-	nodes.push_back(std::move(node));
-	((nodes.push_back(std::move(args))), ...);
-
-	return std::make_shared<simple::horizontal_layout>(std::move(nodes));
+template<class Type, class... Args>
+std::shared_ptr<Simple::Base::Renderable> HLayout(Type&& object, Args&&... objects) {
+	return std::make_shared<Simple::HorizontalLayout>(
+		Simple::Utils::ToVector<std::shared_ptr<Simple::Base::Renderable>>(
+			std::forward<Type>(object), std::forward<Args>(objects)...
+		)
+	);
 }
-std::shared_ptr<simple::base::node> text(std::string value) {
-	return std::make_shared<simple::text>(value);
+std::shared_ptr<Simple::Base::Renderable> Text(std::string value) {
+	return std::make_shared<Simple::Text>(std::move(value));
 }
 
-std::shared_ptr<simple::base::node> border(std::shared_ptr<simple::base::node> target) {
-	return std::make_shared<simple::border>(std::move(target));
+template<class Type, class... Args>
+std::shared_ptr<Simple::Base::Focusable> VContainer(Type&& object, Args&&... objects) {
+	return std::make_shared<Simple::VerticalContainer>(
+		Simple::Utils::ToVector<std::shared_ptr<Simple::Base::Focusable>>(
+			std::forward<Type>(object), std::forward<Args>(objects)...
+		)
+	);
 }
-std::shared_ptr<simple::base::node> background(std::shared_ptr<simple::base::node> target, simple::COLOR color) {
-	return std::make_shared<simple::background>(std::move(target), color);
+template<class Type, class... Args>
+std::shared_ptr<Simple::Base::Focusable> HContainer(Type&& object, Args&&... objects) {
+	return std::make_shared<Simple::HorizontalContainer>(
+		Simple::Utils::ToVector<std::shared_ptr<Simple::Base::Focusable>>(
+			std::forward<Type>(object), std::forward<Args>(objects)...
+		)
+	);
 }
-std::function<std::shared_ptr<simple::base::node>(std::shared_ptr<simple::base::node>)> background(simple::COLOR color) {
-	return [color](std::shared_ptr<simple::base::node> node) { return background(std::move(node), color); };
+std::shared_ptr<Simple::Button> Button(std::string value) {
+	return std::make_shared<Simple::Button>(std::move(value));
 }
-std::shared_ptr<simple::base::node> foreground(std::shared_ptr<simple::base::node> target, simple::COLOR color) {
-	return std::make_shared<simple::foreground>(std::move(target), color);
+std::shared_ptr<Simple::Button> Button(std::string value, std::function<void()> logic) {
+	return std::make_shared<Simple::Button>(std::move(value), std::move(logic));
 }
-std::function<std::shared_ptr<simple::base::node>(std::shared_ptr<simple::base::node>)> foreground(simple::COLOR color) {
-	return [color](std::shared_ptr<simple::base::node> node) { return foreground(std::move(node), color); };
+std::shared_ptr<Simple::Input> Input() {
+	return std::make_shared<Simple::Input>();
+}
+std::shared_ptr<Simple::Input> Input(std::string placeholder) {
+	return std::make_shared<Simple::Input>(std::move(placeholder));
+}
+std::shared_ptr<Simple::Dropdown> Dropdown(std::vector<std::string> value) {
+	return std::make_shared<Simple::Dropdown>(std::move(value));
+}
+std::shared_ptr<Simple::Dropdown> Dropdown(std::vector<std::string> value, std::string placeholder) {
+	return std::make_shared<Simple::Dropdown>(std::move(value), std::move(placeholder));
+}
+std::shared_ptr<Simple::Radio> Radio() {
+	return std::make_shared<Simple::Radio>();
+}
+std::shared_ptr<Simple::Radio> Radio(std::string name) {
+	return std::make_shared<Simple::Radio>(std::move(name));
+}
+std::shared_ptr<Simple::CheckBox> CheckBox() {
+	return std::make_shared<Simple::CheckBox>();
+}
+std::shared_ptr<Simple::CheckBox> CheckBox(std::string name) {
+	return std::make_shared<Simple::CheckBox>(std::move(name));
+}
+template<class... Args>
+Simple::SelectedGroup MakeGroup(Args&&... objects) {
+	return Simple::SelectedGroup(
+		Simple::Utils::ToVector<std::shared_ptr<Simple::Base::Selectable>>(
+			std::forward<Args>(objects)...
+		)
+	);
 }
 
-template<class T, class... A>
-std::shared_ptr<simple::base::component> vcontainer(T node, A... args) {
-	std::vector<std::shared_ptr<simple::base::component>> nodes;
-
-	nodes.push_back(std::move(node));
-	((nodes.push_back(std::move(args))), ...);
-
-	return std::make_shared<simple::vertical_container>(std::move(nodes));
-}
-template<class T, class... A>
-std::shared_ptr<simple::base::component> hcontainer(T node, A... args) {
-	std::vector<std::shared_ptr<simple::base::component>> nodes;
-
-	nodes.push_back(std::move(node));
-	((nodes.push_back(std::move(args))), ...);
-
-	return std::make_shared<simple::horizontal_container>(std::move(nodes));
-}
-std::shared_ptr<simple::button> button(std::string name, std::function<void()> logic) {
-	return std::make_shared<simple::button>(name, logic);
-}
-std::shared_ptr<simple::button> button(std::string name) {
-	return std::make_shared<simple::button>(name, []() {});
-}
-std::shared_ptr<simple::input> input(std::string placeholder) {
-	return std::make_shared<simple::input>(placeholder);
-}
-std::shared_ptr<simple::input> input() {
-	return std::make_shared<simple::input>("");
-}
-std::shared_ptr<simple::dropdown> dropdown(std::vector<std::string> values, std::string placeholder) {
-	return std::make_shared<simple::dropdown>(values, placeholder);
-}
-std::shared_ptr<simple::dropdown> dropdown(std::vector<std::string> values) {
-	return std::make_shared<simple::dropdown>(values, "");
-}
-std::shared_ptr<simple::radio> radio(std::string name) {
-	return std::make_shared<simple::radio>(name);
-}
-std::shared_ptr<simple::radio> radio() {
-	return std::make_shared<simple::radio>("");
-}
-std::shared_ptr<simple::checkbox> checkbox(std::string name) {
-	return std::make_shared<simple::checkbox>(name);
-}
-std::shared_ptr<simple::checkbox> checkbox() {
-	return std::make_shared<simple::checkbox>("");
+std::shared_ptr<Simple::Base::Renderable> Border(std::shared_ptr<Simple::Base::Renderable>&& object) {
+	return std::make_shared<Simple::Border>(std::move(object));
 }
 
 #endif

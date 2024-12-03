@@ -102,8 +102,10 @@ int main() {
 		Text("Alamat Domisili"),
 		iAlamat,
 		Text("Agama"),
-		HLayout(rIslam, Text(" "), rKristen1, Text(" "), rKristen2),
-		HLayout(rHindu, Text(" "), rBuddha, Text(" "), rKonghuchu),
+		VLayout(
+			HLayout(rIslam, Text(" "), rKristen1, Text(" "), rKristen2),
+			HLayout(rHindu, Text(" "), rBuddha, Text(" "), rKonghuchu)
+		),
 		Text("Jurusan Kuliah"),
 		dJurusan,
 		bDaftar,

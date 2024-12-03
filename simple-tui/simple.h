@@ -181,6 +181,26 @@ namespace Simple {
 		private:
 			bool $ = false;
 		};
+		class Modifier : public Renderable {
+		public:
+			Modifier(std::shared_ptr<Renderable>&& object) :
+				Object(std::move(object))
+			{
+			}
+
+			virtual void Init() override {
+				this->Object->Init();
+			}
+			virtual void Set(Rect dimension) override {
+				this->Object->Set(dimension);
+			}
+			virtual void Render(Buffer& buffer) override {
+				this->Object->Render(buffer);
+			}
+
+		protected:
+			std::shared_ptr<Renderable> Object;
+		};
 	}
 	namespace Utils {
 		template<class Type, class... Args>
@@ -795,6 +815,49 @@ namespace Simple {
 			return false;
 		}
 	};
+
+	class Border final : public Base::Modifier {
+	public:
+		Border(std::shared_ptr<Renderable>&& object) :
+			Modifier(std::move(object))
+		{
+		}
+
+		void Init() override {
+			Modifier::Init();
+			Renderable::Width = Modifier::Object->Width + 2;
+			Renderable::Height = Modifier::Object->Height + 2;
+		}
+		void Set(Rect dimension) override {
+			Modifier::Set({ dimension.Left + 1, dimension.Top + 1, dimension.Right - 1, dimension.Bottom - 1 });
+			Renderable::Set(dimension);
+		}
+		void Render(Buffer& buffer) override {
+			Modifier::Render(buffer);
+
+			buffer.At(Renderable::Dimension.Top, Renderable::Dimension.Left).Value = u8"\u256D";
+			buffer.At(Renderable::Dimension.Top, Renderable::Dimension.Right - 1).Value = u8"\u256E";
+			buffer.At(Renderable::Dimension.Bottom - 1, Renderable::Dimension.Left).Value = u8"\u2570";
+			buffer.At(Renderable::Dimension.Bottom - 1, Renderable::Dimension.Right - 1).Value = u8"\u256F";
+
+			for (int x = Renderable::Dimension.Left + 1; x < Renderable::Dimension.Right - 1; ++x) {
+				buffer.At(Renderable::Dimension.Top, x).Value = u8"\u2500";
+				buffer.At(Renderable::Dimension.Bottom - 1, x).Value = u8"\u2500";
+			}
+
+			for (int y = Renderable::Dimension.Top + 1; y < Renderable::Dimension.Bottom - 1; ++y) {
+				buffer.At(y, Renderable::Dimension.Left).Value = u8"\u2502";
+				buffer.At(y, Renderable::Dimension.Right - 1).Value = u8"\u2502";
+			}
+		}
+	};
+}
+
+std::shared_ptr<Simple::Base::Renderable> operator |(
+	std::shared_ptr<Simple::Base::Renderable>&& rval,
+	std::function<std::shared_ptr<Simple::Base::Renderable>(std::shared_ptr<Simple::Base::Renderable>)> nval
+	) {
+	return nval(std::move(rval));
 }
 
 template<class Type, class... Args>
@@ -870,6 +933,10 @@ Simple::SelectedGroup MakeGroup(Args&&... objects) {
 			std::forward<Args>(objects)...
 		)
 	);
+}
+
+std::shared_ptr<Simple::Base::Renderable> Border(std::shared_ptr<Simple::Base::Renderable>&& object) {
+	return std::make_shared<Simple::Border>(std::move(object));
 }
 
 #endif

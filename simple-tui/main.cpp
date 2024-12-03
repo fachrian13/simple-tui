@@ -93,7 +93,7 @@ int main() {
 	auto bKeluar = Button("Keluar", [&loop]() { loop = false; });
 
 	auto vLayout = VLayout(
-		Text("       PENDAFTARAN CALON MAHASISWA BARU       ") | Border,
+		Text("       PENDAFTARAN CALON MAHASISWA BARU       ") | BorderStyle(DoubleLine),
 		Text("Nama Lengkap"),
 		HLayout(iNamaDepan, Text(" "), iNamaBelakang),
 		Text("Jenis Kelamin"),
@@ -111,7 +111,7 @@ int main() {
 		cTerm1,
 		bDaftar,
 		bKeluar
-	) | Border;
+	) | BorderStyle(Rounded);
 
 	auto vContainer = VContainer(
 		HContainer(iNamaDepan, iNamaBelakang),

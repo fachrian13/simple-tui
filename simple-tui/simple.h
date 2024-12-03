@@ -167,7 +167,7 @@ namespace Simple {
 			virtual void Selected(bool flag) {
 				this->$ = flag;
 			}
-			void SetGroup(::Simple::SelectedGroup* group) {
+			void SetGroup(SelectedGroup* group) {
 				this->Group = group;
 			}
 			std::string GetName() {
@@ -176,7 +176,7 @@ namespace Simple {
 
 		protected:
 			std::string Name;
-			::Simple::SelectedGroup* Group = nullptr;
+			SelectedGroup* Group = nullptr;
 
 		private:
 			bool $ = false;
@@ -203,6 +203,21 @@ namespace Simple {
 		};
 	}
 	namespace Utils {
+		class RowType {
+		public:
+			std::string Left;
+			std::string Middle;
+			std::string Right;
+		};
+		class BorderStyle {
+		public:
+			std::string Horizontal;
+			std::string Vertical;
+			RowType Top;
+			RowType Middle;
+			RowType Bottom;
+		};
+
 		template<class Type, class... Args>
 		std::vector<Type> ToVector(Args&&... value) {
 			return std::vector<Type>{std::forward<Type>(value)...};
@@ -828,6 +843,11 @@ namespace Simple {
 			Modifier(std::move(object))
 		{
 		}
+		Border(std::shared_ptr<Renderable>&& object, Utils::BorderStyle style) :
+			Modifier(std::move(object)),
+			style(std::move(style))
+		{
+		}
 
 		void Init() override {
 			Modifier::Init();
@@ -841,23 +861,73 @@ namespace Simple {
 		void Render(Buffer& buffer) override {
 			Modifier::Render(buffer);
 
-			buffer.At(Renderable::Dimension.Top, Renderable::Dimension.Left).Value = u8"\u256D";
-			buffer.At(Renderable::Dimension.Top, Renderable::Dimension.Right - 1).Value = u8"\u256E";
-			buffer.At(Renderable::Dimension.Bottom - 1, Renderable::Dimension.Left).Value = u8"\u2570";
-			buffer.At(Renderable::Dimension.Bottom - 1, Renderable::Dimension.Right - 1).Value = u8"\u256F";
+			buffer.At(Renderable::Dimension.Top, Renderable::Dimension.Left).Value = this->style.Top.Left;
+			buffer.At(Renderable::Dimension.Top, Renderable::Dimension.Right - 1).Value = this->style.Top.Right;
+			buffer.At(Renderable::Dimension.Bottom - 1, Renderable::Dimension.Left).Value = this->style.Bottom.Left;
+			buffer.At(Renderable::Dimension.Bottom - 1, Renderable::Dimension.Right - 1).Value = this->style.Bottom.Right;
 
 			for (int x = Renderable::Dimension.Left + 1; x < Renderable::Dimension.Right - 1; ++x) {
-				buffer.At(Renderable::Dimension.Top, x).Value = u8"\u2500";
-				buffer.At(Renderable::Dimension.Bottom - 1, x).Value = u8"\u2500";
+				buffer.At(Renderable::Dimension.Top, x).Value = this->style.Horizontal;
+				buffer.At(Renderable::Dimension.Bottom - 1, x).Value = this->style.Horizontal;
 			}
-
 			for (int y = Renderable::Dimension.Top + 1; y < Renderable::Dimension.Bottom - 1; ++y) {
-				buffer.At(y, Renderable::Dimension.Left).Value = u8"\u2502";
-				buffer.At(y, Renderable::Dimension.Right - 1).Value = u8"\u2502";
+				buffer.At(y, Renderable::Dimension.Left).Value = this->style.Vertical;
+				buffer.At(y, Renderable::Dimension.Right - 1).Value = this->style.Vertical;
 			}
 		}
+
+	private:
+		Utils::BorderStyle style = {
+			"-", "|",
+			{"+", "+", "+"},
+			{"+", "+", "+"},
+			{"+", "+", "+"}
+		};
 	};
 }
+
+static const Simple::Utils::BorderStyle Ascii = {
+	"-", "|",
+	{"+", "+", "+"},
+	{"+", "+", "+"},
+	{"+", "+", "+"}
+};
+static const Simple::Utils::BorderStyle Line = {
+	u8"━", u8"┃",
+	{u8"┏", u8"┳", u8"┓"},
+	{u8"┣", u8"╋", u8"┫"},
+	{u8"┗", u8"┻", u8"┛"}
+};
+static const Simple::Utils::BorderStyle DoubleLine = {
+	u8"═", u8"║",
+	{u8"╔", u8"╦", u8"╗"},
+	{u8"╠", u8"╬", u8"╣"},
+	{u8"╚", u8"╩", u8"╝"}
+};
+static const Simple::Utils::BorderStyle Invisible = {
+	" ", " ",
+	{" ", " ", " "},
+	{" ", " ", " "},
+	{" ", " ", " "}
+};
+static const Simple::Utils::BorderStyle Rounded = {
+	u8"─", u8"│",
+	{u8"╭", u8"─", u8"╮"},
+	{u8"│", u8" ", u8"│"},
+	{u8"╰", u8"─", u8"╯"}
+};
+static const Simple::Utils::BorderStyle Dashed = {
+	u8"╌", u8"╎",
+	{u8"╌", u8"╌", u8"╌"},
+	{u8"╎", u8" ", u8"╎"},
+	{u8"╌", u8"╌", u8"╌"}
+};
+static const Simple::Utils::BorderStyle Thick = {
+	u8"═", u8"║",
+	{u8"╔", u8"╦", u8"╗"},
+	{u8"╠", u8"╬", u8"╣"},
+	{u8"╚", u8"╩", u8"╝"}
+};
 
 std::shared_ptr<Simple::Base::Renderable> operator |(
 	std::shared_ptr<Simple::Base::Renderable>&& rval,
@@ -943,6 +1013,11 @@ Simple::SelectedGroup MakeGroup(Args&&... objects) {
 
 std::shared_ptr<Simple::Base::Renderable> Border(std::shared_ptr<Simple::Base::Renderable>&& object) {
 	return std::make_shared<Simple::Border>(std::move(object));
+}
+std::function<std::shared_ptr<Simple::Base::Renderable>(std::shared_ptr<Simple::Base::Renderable>)> BorderStyle(Simple::Utils::BorderStyle style) {
+	return [style](std::shared_ptr<Simple::Base::Renderable>&& object) {
+		return std::make_shared<Simple::Border>(std::move(object), std::move(style));
+		};
 }
 
 #endif

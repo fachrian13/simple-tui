@@ -926,12 +926,6 @@ static const Simple::Utils::BorderStyle Dashed = {
 	{u8"╎", u8" ", u8"╎"},
 	{u8"╌", u8"╌", u8"╌"}
 };
-static const Simple::Utils::BorderStyle Thick = {
-	u8"═", u8"║",
-	{u8"╔", u8"╦", u8"╗"},
-	{u8"╠", u8"╬", u8"╣"},
-	{u8"╚", u8"╩", u8"╝"}
-};
 
 std::shared_ptr<Simple::Base::Renderable> operator |(
 	std::shared_ptr<Simple::Base::Renderable>&& rval,

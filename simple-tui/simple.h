@@ -111,7 +111,7 @@ namespace Simple {
 		}
 
 		void Clear() {
-			this->pixels = std::vector<Pixel>(this->width * this->height, this->style);
+			std::fill(this->pixels.begin(), this->pixels.end(), this->style);
 		}
 
 	private:
@@ -888,6 +888,64 @@ namespace Simple {
 			{"+", "+", "+"}
 		};
 	};
+	class Background final : public Base::Modifier {
+	public:
+		Background(std::shared_ptr<Base::Renderable>&& object, Color color) :
+			Modifier(std::move(object)),
+			color(std::move(color))
+		{
+		}
+
+		void Init() override {
+			Modifier::Init();
+			Renderable::Width = Modifier::Object->Width;
+			Renderable::Height = Modifier::Object->Height;
+		}
+		void Set(Rect dimension) override {
+			Modifier::Set(dimension);
+			Renderable::Set(dimension);
+		}
+		void Render(Buffer& buffer) override {
+			Modifier::Render(buffer);
+
+			for (int y = Renderable::Dimension.Top; y < Renderable::Dimension.Bottom; ++y)
+				for (int x = Renderable::Dimension.Left; x < Renderable::Dimension.Right; ++x)
+					if (buffer.At(y, x).Background == Color::Default)
+						buffer.At(y, x).Background = this->color;
+		}
+
+	private:
+		Color color;
+	};
+	class Foreground final : public Base::Modifier {
+	public:
+		Foreground(std::shared_ptr<Base::Renderable>&& object, Color color) :
+			Modifier(std::move(object)),
+			color(std::move(color))
+		{
+		}
+
+		void Init() override {
+			Modifier::Init();
+			Renderable::Width = Modifier::Object->Width;
+			Renderable::Height = Modifier::Object->Height;
+		}
+		void Set(Rect dimension) override {
+			Modifier::Set(dimension);
+			Renderable::Set(dimension);
+		}
+		void Render(Buffer& buffer) override {
+			Modifier::Render(buffer);
+
+			for (int y = Renderable::Dimension.Top; y < Renderable::Dimension.Bottom; ++y)
+				for (int x = Renderable::Dimension.Left; x < Renderable::Dimension.Right; ++x)
+					if (buffer.At(y, x).Background == Color::Default)
+						buffer.At(y, x).Background = this->color;
+		}
+
+	private:
+		Color color;
+	};
 }
 
 static const Simple::Utils::BorderStyle Ascii = {
@@ -1015,6 +1073,16 @@ std::shared_ptr<Simple::Base::Renderable> Border(std::shared_ptr<Simple::Base::R
 std::function<std::shared_ptr<Simple::Base::Renderable>(std::shared_ptr<Simple::Base::Renderable>)> BorderStyle(Simple::Utils::BorderStyle style) {
 	return [style](std::shared_ptr<Simple::Base::Renderable>&& object) {
 		return std::make_shared<Simple::Border>(std::move(object), std::move(style));
+		};
+}
+std::function<std::shared_ptr<Simple::Base::Renderable>(std::shared_ptr<Simple::Base::Renderable>)> Background(Simple::Color color) {
+	return [color](std::shared_ptr<Simple::Base::Renderable>&& object) {
+		return std::make_shared<Simple::Background>(std::move(object), std::move(color));
+		};
+}
+std::function<std::shared_ptr<Simple::Base::Renderable>(std::shared_ptr<Simple::Base::Renderable>)> Foreground(Simple::Color color) {
+	return [color](std::shared_ptr<Simple::Base::Renderable>&& object) {
+		return std::make_shared<Simple::Foreground>(std::move(object), std::move(color));
 		};
 }
 

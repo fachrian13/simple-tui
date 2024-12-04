@@ -1,12 +1,14 @@
 ﻿#include "simple.h"
 #include <iostream>
+#include <chrono>
+#include <thread>
+
+using namespace std::chrono_literals;
 
 void Render(Simple::Buffer& buffer, std::shared_ptr<Simple::Base::Renderable>& object) {
 	object->Init();
 	object->Set({ 0, 0, object->Width, object->Height });
 	object->Render(buffer);
-	std::cout << buffer.ToString() << "\x1b[H" << std::flush;
-	buffer.Clear();
 }
 
 int main() {
@@ -157,12 +159,14 @@ int main() {
 
 	std::cout << "\x1b[?25l";
 	while (loop) {
-		Render(buffer, vLayout);
-
 		ReadConsoleInput(hIn, record, 128, &size);
 		for (DWORD i = 0; i < size; ++i)
 			if (record[i].EventType == KEY_EVENT && record[i].Event.KeyEvent.bKeyDown)
 				vContainer->OnKey(record[i].Event.KeyEvent);
+		
+		buffer.Clear();
+		Render(buffer, vLayout);
+		std::cout << "\x1b[H" << buffer.ToString() << std::flush;
 	}
 
 	return 0;

@@ -45,6 +45,23 @@ namespace Simple {
 		{
 		}
 
+		bool operator ==(const Pixel& other) {
+			return
+				this->Bold == other.Bold &&
+				this->Dim == other.Dim &&
+				this->Italic == other.Italic &&
+				this->Underline == other.Underline &&
+				this->Blink == other.Blink &&
+				this->Invert == other.Invert &&
+				this->Invisible == other.Invisible &&
+				this->Strikethrough == other.Strikethrough &&
+				this->Background == other.Background &&
+				this->Foreground == other.Foreground;
+		}
+		bool operator !=(const Pixel& other) {
+			return !(*this == other);
+		}
+
 	public:
 		bool Bold = false;
 		bool Dim = false;
@@ -83,33 +100,40 @@ namespace Simple {
 		}
 		std::string ToString() {
 			std::ostringstream result;
+			Pixel prev;
 
 			for (int y = 0; y < this->height; ++y) {
 				for (int x = 0; x < this->width; ++x) {
-					Pixel& p = this->pixels.at(y * this->width + x);
+					const Pixel& p = this->pixels.at(y * this->width + x);
 
-					result << "\x1b["
-						<< (p.Bold ? "1;" : "22;")
-						<< (p.Dim ? "2;" : "22;")
-						<< (p.Italic ? "3;" : "23;")
-						<< (p.Underline ? "4;" : "24;")
-						<< (p.Blink ? "5;" : "25;")
-						<< (p.Invert ? "7;" : "27;")
-						<< (p.Invisible ? "8;" : "28;")
-						<< (p.Strikethrough ? "9;" : "29;")
-						<< std::to_string(p.Foreground) << ";"
-						<< std::to_string(p.Background + 10) << "m"
-						<< p.Value;
+					if (prev != p) {
+
+						result << "\x1b["
+							<< (p.Bold ? "1;" : "22;")
+							<< (p.Dim ? "2;" : "22;")
+							<< (p.Italic ? "3;" : "23;")
+							<< (p.Underline ? "4;" : "24;")
+							<< (p.Blink ? "5;" : "25;")
+							<< (p.Invert ? "7;" : "27;")
+							<< (p.Invisible ? "8;" : "28;")
+							<< (p.Strikethrough ? "9;" : "29;")
+							<< std::to_string(p.Foreground) << ";"
+							<< std::to_string(p.Background + 10) << "m";
+
+						prev = p;
+					}
+
+					result << p.Value;
 				}
 
-				if (y < this->height - 1)
+				if (y < this->height - 1) {
 					result << "\n";
+				}
 			}
 
 			result << "\x1b[m";
 			return result.str();
 		}
-
 		void Clear() {
 			std::fill(this->pixels.begin(), this->pixels.end(), this->style);
 		}

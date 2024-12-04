@@ -2,6 +2,7 @@
 #include <iostream>
 #include <chrono>
 #include <thread>
+#include <mutex>
 
 using namespace std::chrono_literals;
 
@@ -14,7 +15,9 @@ void Render(Simple::Buffer& buffer, std::shared_ptr<Simple::Base::Renderable>& o
 int main() {
 	SetConsoleOutputCP(CP_UTF8);
 
-	bool loop = true;
+	std::mutex mtx;
+	std::atomic<bool> needRender = false;
+	std::atomic<bool> loop = true;
 
 	auto iNamaDepan = Input("Nama Depan");
 	iNamaDepan->Width = 24;
@@ -123,7 +126,7 @@ int main() {
 			HLayout(rHindu, Text(" "), rBuddha, Text(" "), rKonghuchu)
 		) | Background(Simple::Color::Red),
 		Text("Jurusan Kuliah"),
-		dJurusan | Foreground(Simple::Color::BrightGreen),
+		dJurusan,
 		Text("Username"),
 		iUsername,
 		Text("Password"),
@@ -154,20 +157,57 @@ int main() {
 	auto buffer = Simple::Buffer(120, 30);
 
 	HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
-	INPUT_RECORD record[128];
-	DWORD size;
 
-	std::cout << "\x1b[?25l";
-	while (loop) {
-		ReadConsoleInput(hIn, record, 128, &size);
-		for (DWORD i = 0; i < size; ++i)
-			if (record[i].EventType == KEY_EVENT && record[i].Event.KeyEvent.bKeyDown)
-				vContainer->OnKey(record[i].Event.KeyEvent);
-		
-		buffer.Clear();
-		Render(buffer, vLayout);
-		std::cout << "\x1b[H" << buffer.ToString() << std::flush;
-	}
+	INPUT_RECORD record[128];
+	DWORD size = 0;
+
+	const auto frameDuration = 1000ms / 60;
+
+	auto inputThread = [&]() {
+		while (loop) {
+			if (WaitForSingleObject(hIn, INFINITE) == WAIT_OBJECT_0) {
+				ReadConsoleInput(hIn, record, 128, &size);
+				for (DWORD i = 0; i < size; ++i) {
+					std::lock_guard<std::mutex> lock(mtx);
+
+					if (record[i].EventType == KEY_EVENT && record[i].Event.KeyEvent.bKeyDown) {
+						vContainer->OnKey(record[i].Event.KeyEvent);
+					}
+				}
+				needRender = true;
+			}
+		}
+		};
+
+	auto renderLoop = [&]() {
+		auto lastFrameTime = std::chrono::steady_clock::now();
+
+		while (loop) {
+			auto currentFrameTime = std::chrono::steady_clock::now();
+			auto frameTime = currentFrameTime - lastFrameTime;
+
+			if (frameTime < frameDuration) {
+				std::this_thread::sleep_for(frameDuration - frameTime);
+				continue;
+			}
+			lastFrameTime = currentFrameTime;
+
+			{
+				std::lock_guard<std::mutex> lock(mtx);
+				if (needRender) {
+					buffer.Clear();
+					Render(buffer, vLayout);
+					std::cout << "\x1b[H" << buffer.ToString() << std::flush;
+					needRender = false;
+				}
+			}
+		}
+		};
+
+	std::thread t1(inputThread);
+	std::thread t2(renderLoop);
+	t1.join();
+	t2.join();
 
 	return 0;
 }

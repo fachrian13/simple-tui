@@ -77,6 +77,7 @@ namespace Simple {
 	};
 	class Buffer final {
 	public:
+		Buffer() = default;
 		Buffer(int width, int height) :
 			width(width),
 			height(height),
@@ -107,7 +108,6 @@ namespace Simple {
 					const Pixel& p = this->pixels.at(y * this->width + x);
 
 					if (prev != p) {
-
 						result << "\x1b["
 							<< (p.Bold ? "1;" : "22;")
 							<< (p.Dim ? "2;" : "22;")

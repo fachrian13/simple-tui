@@ -107,6 +107,11 @@ int main() {
 	iPassword->Pattern = [](char ch) { return isprint(ch) && !isspace(ch); };
 	auto cTerm = CheckBox("Saya telah membaca peraturan");
 	auto cTerm1 = CheckBox("Saya setuju dengan peraturan Univertsitas");
+	auto tNyalakan = Toggle();
+	auto tNyalakan1 = Toggle();
+	auto tNyalakan2 = Toggle();
+	auto tNyalakan3 = Toggle();
+	auto gToggle = MakeGroup(tNyalakan, tNyalakan1, tNyalakan2, tNyalakan3);
 	auto bDaftar = Button("Daftar");
 	auto bKeluar = Button("Keluar", [&loop]() { loop = false; });
 
@@ -133,6 +138,12 @@ int main() {
 		iPassword,
 		cTerm,
 		cTerm1,
+		HLayout(
+			tNyalakan,
+			tNyalakan1,
+			tNyalakan2,
+			tNyalakan3
+		),
 		bDaftar,
 		bKeluar
 	) | Background(Simple::Color::Blue) | BorderStyle(Rounded);
@@ -149,6 +160,12 @@ int main() {
 		iPassword,
 		cTerm,
 		cTerm1,
+		HContainer(
+			tNyalakan,
+			tNyalakan1,
+			tNyalakan2,
+			tNyalakan3
+		),
 		bDaftar,
 		bKeluar
 	);

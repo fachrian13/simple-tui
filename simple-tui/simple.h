@@ -398,6 +398,7 @@ namespace Simple {
 
 			return false;
 		}
+
 	private:
 		size_t focusedObject = 0;
 		std::vector<std::shared_ptr<Focusable>> objects;
@@ -447,6 +448,7 @@ namespace Simple {
 
 			return false;
 		}
+
 	private:
 		size_t focusedObject = 0;
 		std::vector<std::shared_ptr<Focusable>> objects;
@@ -798,9 +800,10 @@ namespace Simple {
 			buffer.At(Renderable::Dimension.Top, Renderable::Dimension.Left).Value = "(";
 			buffer.At(Renderable::Dimension.Top, Renderable::Dimension.Left + 2).Value = ")";
 
-			for (int y = Renderable::Dimension.Top, i = 0; y < Renderable::Dimension.Bottom; ++y)
-				for (int x = Renderable::Dimension.Left + 3; x < Renderable::Dimension.Right; ++x, ++i)
-					buffer.At(y, x).Value = Selectable::Name.at(i);
+			if (!Selectable::Name.empty())
+				for (int y = Renderable::Dimension.Top, i = 0; y < Renderable::Dimension.Bottom; ++y)
+					for (int x = Renderable::Dimension.Left + 3; x < Renderable::Dimension.Right; ++x, ++i)
+						buffer.At(y, x).Value = Selectable::Name.at(i);
 
 			if (Selectable::Selected())
 				buffer.At(Renderable::Dimension.Top, Renderable::Dimension.Left + 1).Value = u8"\u25CF";
@@ -839,12 +842,53 @@ namespace Simple {
 			buffer.At(Renderable::Dimension.Top, Renderable::Dimension.Left).Value = "[";
 			buffer.At(Renderable::Dimension.Top, Renderable::Dimension.Left + 2).Value = "]";
 
-			for (int y = Renderable::Dimension.Top, i = 0; y < Renderable::Dimension.Bottom; ++y)
-				for (int x = Renderable::Dimension.Left + 3; x < Renderable::Dimension.Right; ++x, ++i)
-					buffer.At(y, x).Value = Selectable::Name.at(i);
+			if (!Selectable::Name.empty())
+				for (int y = Renderable::Dimension.Top, i = 0; y < Renderable::Dimension.Bottom; ++y)
+					for (int x = Renderable::Dimension.Left + 3; x < Renderable::Dimension.Right; ++x, ++i)
+						buffer.At(y, x).Value = Selectable::Name.at(i);
 
 			if (Selectable::Selected())
 				buffer.At(Renderable::Dimension.Top, Renderable::Dimension.Left + 1).Value = u8"\u25A0";
+
+			if (Focusable::Focused())
+				for (int y = Renderable::Dimension.Top; y < Renderable::Dimension.Bottom; ++y)
+					for (int x = Renderable::Dimension.Left; x < Renderable::Dimension.Right; ++x)
+						buffer.At(y, x).Invert = true;
+		}
+
+		bool OnKey(KEY_EVENT_RECORD key) override {
+			if (key.wVirtualKeyCode == VK_RETURN || key.uChar.AsciiChar == ' ') {
+				if (Selectable::Group)
+					Selectable::Group->Clear();
+
+				Selectable::Selected(!Selectable::Selected());
+				return true;
+			}
+
+			return false;
+		}
+	};
+	class Toggle final : public Base::Renderable, public Base::Focusable, public Base::Selectable {
+	public:
+		Toggle() = default;
+
+		void Init() override {
+			Renderable::Width = Selectable::Selected() ? 4 : 5;
+			Renderable::Height = 1;
+		}
+		void Render(Buffer& buffer) override {
+			buffer.At(Renderable::Dimension.Top, Renderable::Dimension.Left).Value = "[";
+			buffer.At(Renderable::Dimension.Top, Renderable::Dimension.Right - 1).Value = "]";
+
+			if (Selectable::Selected()) {
+				buffer.At(Renderable::Dimension.Top, Renderable::Dimension.Left + 1).Value = "O";
+				buffer.At(Renderable::Dimension.Top, Renderable::Dimension.Left + 2).Value = "N";
+			}
+			else {
+				buffer.At(Renderable::Dimension.Top, Renderable::Dimension.Left + 1).Value = "O";
+				buffer.At(Renderable::Dimension.Top, Renderable::Dimension.Left + 2).Value = "F";
+				buffer.At(Renderable::Dimension.Top, Renderable::Dimension.Left + 3).Value = "F";
+			}
 
 			if (Focusable::Focused())
 				for (int y = Renderable::Dimension.Top; y < Renderable::Dimension.Bottom; ++y)
@@ -1081,6 +1125,9 @@ std::shared_ptr<Simple::CheckBox> CheckBox() {
 }
 std::shared_ptr<Simple::CheckBox> CheckBox(std::string name) {
 	return std::make_shared<Simple::CheckBox>(std::move(name));
+}
+std::shared_ptr<Simple::Toggle> Toggle() {
+	return std::make_shared<Simple::Toggle>();
 }
 template<class... Args>
 Simple::SelectedGroup MakeGroup(Args&&... objects) {

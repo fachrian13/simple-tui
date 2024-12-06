@@ -252,6 +252,28 @@ namespace Simple {
 		}
 	}
 
+	class SelectedGroup final {
+	public:
+		SelectedGroup(std::vector<std::shared_ptr<Base::Selectable>>&& objects) {
+			for (auto& object : objects) {
+				object->SetGroup(this);
+				this->objects.push_back(std::move(object));
+			}
+		}
+		void Clear() {
+			for (const auto& object : this->objects)
+				object->Selected(false);
+		}
+		const std::shared_ptr<Base::Selectable>& Selected() {
+			for (const auto& object : this->objects)
+				if (object->Selected())
+					return object;
+		}
+
+	private:
+		std::vector<std::shared_ptr<Base::Selectable>> objects;
+	};
+
 	class VerticalLayout final : public Base::Renderable {
 	public:
 		VerticalLayout(std::vector<std::shared_ptr<Renderable>>&& objects) :
@@ -768,27 +790,6 @@ namespace Simple {
 		int yCursor = 0;
 		int textBegin = 0;
 	};
-	class SelectedGroup final {
-	public:
-		SelectedGroup(std::vector<std::shared_ptr<Base::Selectable>>&& objects) {
-			for (auto& object : objects) {
-				object->SetGroup(this);
-				this->objects.push_back(std::move(object));
-			}
-		}
-		void Clear() {
-			for (const auto& object : this->objects)
-				object->Selected(false);
-		}
-		const std::shared_ptr<Base::Selectable>& Selected() {
-			for (const auto& object : this->objects)
-				if (object->Selected())
-					return object;
-		}
-
-	private:
-		std::vector<std::shared_ptr<Base::Selectable>> objects;
-	};
 	class Radio final : public Base::Renderable, public Base::Focusable, public Base::Selectable {
 	public:
 		Radio() = default;
@@ -1021,11 +1022,13 @@ namespace Simple {
 	};
 }
 
-std::shared_ptr<Simple::Base::Renderable> operator |(
-	std::shared_ptr<Simple::Base::Renderable>&& rval,
-	std::function<std::shared_ptr<Simple::Base::Renderable>(std::shared_ptr<Simple::Base::Renderable>)> nval
-	) {
-	return nval(std::move(rval));
+template<class... Args>
+Simple::SelectedGroup MakeGroup(Args&&... objects) {
+	return Simple::SelectedGroup(
+		Simple::Utils::ToVector<std::shared_ptr<Simple::Base::Selectable>>(
+			std::forward<Args>(objects)...
+		)
+	);
 }
 
 template<class Type, class... Args>
@@ -1097,14 +1100,6 @@ std::shared_ptr<Simple::CheckBox> CheckBox(std::string name) {
 std::shared_ptr<Simple::Toggle> Toggle() {
 	return std::make_shared<Simple::Toggle>();
 }
-template<class... Args>
-Simple::SelectedGroup MakeGroup(Args&&... objects) {
-	return Simple::SelectedGroup(
-		Simple::Utils::ToVector<std::shared_ptr<Simple::Base::Selectable>>(
-			std::forward<Args>(objects)...
-		)
-	);
-}
 
 std::shared_ptr<Simple::Base::Renderable> Border(std::shared_ptr<Simple::Base::Renderable>&& object) {
 	return std::make_shared<Simple::Border>(std::move(object));
@@ -1123,6 +1118,13 @@ std::function<std::shared_ptr<Simple::Base::Renderable>(std::shared_ptr<Simple::
 	return [color](std::shared_ptr<Simple::Base::Renderable>&& object) {
 		return std::make_shared<Simple::Foreground>(std::move(object), std::move(color));
 		};
+}
+
+std::shared_ptr<Simple::Base::Renderable> operator |(
+	std::shared_ptr<Simple::Base::Renderable>&& rval,
+	std::function<std::shared_ptr<Simple::Base::Renderable>(std::shared_ptr<Simple::Base::Renderable>)> nval
+	) {
+	return nval(std::move(rval));
 }
 
 static const Simple::Utils::BorderStyle Ascii = {

@@ -1021,43 +1021,6 @@ namespace Simple {
 	};
 }
 
-static const Simple::Utils::BorderStyle Ascii = {
-	"-", "|",
-	{"+", "+", "+"},
-	{"+", "+", "+"},
-	{"+", "+", "+"}
-};
-static const Simple::Utils::BorderStyle Line = {
-	u8"━", u8"┃",
-	{u8"┏", u8"┳", u8"┓"},
-	{u8"┣", u8"╋", u8"┫"},
-	{u8"┗", u8"┻", u8"┛"}
-};
-static const Simple::Utils::BorderStyle DoubleLine = {
-	u8"═", u8"║",
-	{u8"╔", u8"╦", u8"╗"},
-	{u8"╠", u8"╬", u8"╣"},
-	{u8"╚", u8"╩", u8"╝"}
-};
-static const Simple::Utils::BorderStyle Invisible = {
-	" ", " ",
-	{" ", " ", " "},
-	{" ", " ", " "},
-	{" ", " ", " "}
-};
-static const Simple::Utils::BorderStyle Rounded = {
-	u8"─", u8"│",
-	{u8"╭", u8"─", u8"╮"},
-	{u8"│", u8" ", u8"│"},
-	{u8"╰", u8"─", u8"╯"}
-};
-static const Simple::Utils::BorderStyle Dashed = {
-	u8"╌", u8"╎",
-	{u8"╌", u8"╌", u8"╌"},
-	{u8"╎", u8" ", u8"╎"},
-	{u8"╌", u8"╌", u8"╌"}
-};
-
 std::shared_ptr<Simple::Base::Renderable> operator |(
 	std::shared_ptr<Simple::Base::Renderable>&& rval,
 	std::function<std::shared_ptr<Simple::Base::Renderable>(std::shared_ptr<Simple::Base::Renderable>)> nval
@@ -1161,5 +1124,42 @@ std::function<std::shared_ptr<Simple::Base::Renderable>(std::shared_ptr<Simple::
 		return std::make_shared<Simple::Foreground>(std::move(object), std::move(color));
 		};
 }
+
+static const Simple::Utils::BorderStyle Ascii = {
+	"-", "|",
+	{"+", "+", "+"},
+	{"+", "+", "+"},
+	{"+", "+", "+"}
+};
+static const Simple::Utils::BorderStyle Line = {
+	u8"━", u8"┃",
+	{u8"┏", u8"┳", u8"┓"},
+	{u8"┣", u8"╋", u8"┫"},
+	{u8"┗", u8"┻", u8"┛"}
+};
+static const Simple::Utils::BorderStyle DoubleLine = {
+	u8"═", u8"║",
+	{u8"╔", u8"╦", u8"╗"},
+	{u8"╠", u8"╬", u8"╣"},
+	{u8"╚", u8"╩", u8"╝"}
+};
+static const Simple::Utils::BorderStyle Invisible = {
+	" ", " ",
+	{" ", " ", " "},
+	{" ", " ", " "},
+	{" ", " ", " "}
+};
+static const Simple::Utils::BorderStyle Rounded = {
+	u8"─", u8"│",
+	{u8"╭", u8"─", u8"╮"},
+	{u8"│", u8" ", u8"│"},
+	{u8"╰", u8"─", u8"╯"}
+};
+static const Simple::Utils::BorderStyle Dashed = {
+	u8"╌", u8"╎",
+	{u8"╌", u8"╌", u8"╌"},
+	{u8"╎", u8" ", u8"╎"},
+	{u8"╌", u8"╌", u8"╌"}
+};
 
 #endif

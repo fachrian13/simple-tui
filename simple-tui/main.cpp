@@ -129,7 +129,7 @@ int main() {
 		VLayout(
 			HLayout(rIslam, Text(" "), rKristen1, Text(" "), rKristen2),
 			HLayout(rHindu, Text(" "), rBuddha, Text(" "), rKonghuchu)
-		) | Background(Simple::Color::Red),
+		),
 		Text("Jurusan Kuliah"),
 		dJurusan,
 		Text("Username"),
@@ -146,7 +146,7 @@ int main() {
 		),
 		bDaftar,
 		bKeluar
-	) | Background(Simple::Color::Blue) | BorderStyle(Rounded);
+	) | BorderStyle(Rounded);
 
 	auto vContainer = VContainer(
 		HContainer(iNamaDepan, iNamaBelakang),

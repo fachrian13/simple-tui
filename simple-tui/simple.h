@@ -780,6 +780,11 @@ namespace Simple {
 			for (const auto& object : this->objects)
 				object->Selected(false);
 		}
+		const std::shared_ptr<Base::Selectable>& Selected() {
+			for (const auto& object : this->objects)
+				if (object->Selected())
+					return object;
+		}
 
 	private:
 		std::vector<std::shared_ptr<Base::Selectable>> objects;

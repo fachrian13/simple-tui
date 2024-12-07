@@ -104,43 +104,48 @@ namespace Simple {
 			Pixel prev;
 
 			for (int y = 0; y < this->height; ++y) {
-				for (int x = 0; x < this->width; ++x) {
-					const Pixel& p = this->pixels.at(y * this->width + x);
-
-					if (prev != p) {
-						result << "\x1b["
-							<< (p.Bold ? "1;" : "22;")
-							<< (p.Dim ? "2;" : "22;")
-							<< (p.Italic ? "3;" : "23;")
-							<< (p.Underline ? "4;" : "24;")
-							<< (p.Blink ? "5;" : "25;")
-							<< (p.Invert ? "7;" : "27;")
-							<< (p.Invisible ? "8;" : "28;")
-							<< (p.Strikethrough ? "9;" : "29;")
-							<< std::to_string(p.Foreground) << ";"
-							<< std::to_string(p.Background + 10) << "m";
-
-						prev = p;
-					}
-
-					result << p.Value;
-				}
-
-				if (y < this->height - 1) {
+				if (y > 0)
 					result << "\n";
+
+				for (int x = 0; x < this->width; ++x) {
+					const Pixel& next = this->pixels.at(y * this->width + x);
+
+					if (prev.Bold != next.Bold)
+						result << (next.Bold ? "\x1b[1m" : "\x1b[22m");
+					if (prev.Dim != next.Dim)
+						result << (next.Dim ? "\x1b[2m" : "\x1b[22m");
+					if (prev.Italic != next.Italic)
+						result << (next.Italic ? "\x1b[3m" : "\x1b[23m");
+					if (prev.Underline != next.Underline)
+						result << (next.Underline ? "\x1b[4m" : "\x1b[24m");
+					if (prev.Blink != next.Blink)
+						result << (next.Blink ? "\x1b[5m" : "\x1b[25m");
+					if (prev.Invert != next.Invert)
+						result << (next.Invert ? "\x1b[7m" : "\x1b[27m");
+					if (prev.Invisible != next.Invisible)
+						result << (next.Invisible ? "\x1b[8m" : "\x1b[28m");
+					if (prev.Strikethrough != next.Strikethrough)
+						result << (next.Strikethrough ? "\x1b[9m" : "\x1b[29m");
+					if (prev.Foreground != next.Foreground)
+						result << next.Background << ";";
+					if (prev.Background != next.Background)
+						result << next.Background + 10 << "m";
+					result << next.Value;
+
+					prev = next;
 				}
 			}
-
 			result << "\x1b[m";
+
 			return result.str();
 		}
-		const Pixel& GetStyle() {
+		const Pixel& GetStyle() const {
 			return this->style;
 		}
-		const int& GetWidth() {
+		const int& GetWidth() const {
 			return this->width;
 		}
-		const int& GetHeight() {
+		const int& GetHeight() const {
 			return this->height;
 		}
 		void Clear() {
@@ -198,7 +203,7 @@ namespace Simple {
 				Name(std::move(name))
 			{
 			}
-			bool Selected() {
+			const bool& Selected() const {
 				return this->$;
 			}
 			virtual void Selected(bool flag) {
@@ -207,7 +212,7 @@ namespace Simple {
 			void SetGroup(SelectedGroup* group) {
 				this->Group = group;
 			}
-			std::string GetName() {
+			const std::string& GetName() const {
 				return this->Name;
 			}
 
@@ -273,7 +278,7 @@ namespace Simple {
 			for (const auto& object : this->objects)
 				object->Selected(false);
 		}
-		const std::shared_ptr<Base::Selectable>& Selected() {
+		const std::shared_ptr<Base::Selectable>& Selected() const {
 			for (const auto& object : this->objects)
 				if (object->Selected())
 					return object;

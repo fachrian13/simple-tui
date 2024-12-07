@@ -134,6 +134,15 @@ namespace Simple {
 			result << "\x1b[m";
 			return result.str();
 		}
+		const Pixel& GetStyle() {
+			return this->style;
+		}
+		const int& GetWidth() {
+			return this->width;
+		}
+		const int& GetHeight() {
+			return this->height;
+		}
 		void Clear() {
 			std::fill(this->pixels.begin(), this->pixels.end(), this->style);
 		}
@@ -688,7 +697,7 @@ namespace Simple {
 					[](const std::string& a, const std::string& b) {
 						return a.size() < b.size();
 					}
-				)->size());
+				)->size()) + 1;
 			Renderable::Height = Focusable::Focused() ? std::min(7, int(this->values.size())) : 1;
 		}
 		void Render(Buffer& buffer) override {
@@ -700,11 +709,15 @@ namespace Simple {
 				for (int x = Renderable::Dimension.Left, i = 0; x < Renderable::Dimension.Right; ++x, ++i)
 					buffer.At(Renderable::Dimension.Top + this->yCursor, x).Invert = false;
 
-				for (int y = Renderable::Dimension.Top, i = this->textBegin; y < Renderable::Dimension.Bottom; ++y, ++i)
-					for (int x = Renderable::Dimension.Left, ii = 0; x < Renderable::Dimension.Right; ++x, ++ii)
+				for (int y = Renderable::Dimension.Top, i = this->textBegin; y < Renderable::Dimension.Bottom; ++y, ++i) {
+					for (int x = Renderable::Dimension.Left + 1, ii = 0; x < Renderable::Dimension.Right; ++x, ++ii)
 						if (ii < this->values.at(i).size())
 							buffer.At(y, x).Value = this->values.at(i).at(ii);
 						else break;
+
+					if (i == this->selectedIndex)
+						buffer.At(y, Renderable::Dimension.Left).Value = u8"*";
+				}
 			}
 			else {
 				if (this->selectedValue.empty() && !this->placeholder.empty()) {
@@ -759,6 +772,7 @@ namespace Simple {
 				return false;
 			case VK_RETURN:
 				this->selectedValue = this->values.at(this->index);
+				this->selectedIndex = this->index;
 				return false;
 			default:
 				switch (key.uChar.AsciiChar) {
@@ -787,6 +801,7 @@ namespace Simple {
 		std::string placeholder;
 		std::vector<std::string> values;
 		int index = 0;
+		int selectedIndex = -1;
 		int yCursor = 0;
 		int textBegin = 0;
 	};
@@ -984,7 +999,7 @@ namespace Simple {
 
 			for (int y = Renderable::Dimension.Top; y < Renderable::Dimension.Bottom; ++y)
 				for (int x = Renderable::Dimension.Left; x < Renderable::Dimension.Right; ++x)
-					if (buffer.At(y, x).Background == Color::Default)
+					if (buffer.At(y, x).Background == buffer.GetStyle().Background)
 						buffer.At(y, x).Background = this->color;
 		}
 
@@ -1013,13 +1028,20 @@ namespace Simple {
 
 			for (int y = Renderable::Dimension.Top; y < Renderable::Dimension.Bottom; ++y)
 				for (int x = Renderable::Dimension.Left; x < Renderable::Dimension.Right; ++x)
-					if (buffer.At(y, x).Background == Color::Default)
-						buffer.At(y, x).Background = this->color;
+					if (buffer.At(y, x).Foreground == buffer.GetStyle().Foreground)
+						buffer.At(y, x).Foreground = this->color;
 		}
 
 	private:
 		Color color;
 	};
+}
+
+std::shared_ptr<Simple::Base::Renderable> operator |(
+	std::shared_ptr<Simple::Base::Renderable>&& rval,
+	std::function<std::shared_ptr<Simple::Base::Renderable>(std::shared_ptr<Simple::Base::Renderable>)> nval
+	) {
+	return nval(std::move(rval));
 }
 
 template<class... Args>
@@ -1118,13 +1140,6 @@ std::function<std::shared_ptr<Simple::Base::Renderable>(std::shared_ptr<Simple::
 	return [color](std::shared_ptr<Simple::Base::Renderable>&& object) {
 		return std::make_shared<Simple::Foreground>(std::move(object), std::move(color));
 		};
-}
-
-std::shared_ptr<Simple::Base::Renderable> operator |(
-	std::shared_ptr<Simple::Base::Renderable>&& rval,
-	std::function<std::shared_ptr<Simple::Base::Renderable>(std::shared_ptr<Simple::Base::Renderable>)> nval
-	) {
-	return nval(std::move(rval));
 }
 
 static const Simple::Utils::BorderStyle Ascii = {

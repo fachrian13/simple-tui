@@ -8,7 +8,9 @@ using namespace std::chrono_literals;
 void Render(Simple::Buffer& buffer, std::shared_ptr<Simple::Base::Renderable>& object) {
 	buffer.Clear();
 	object->Init();
-	object->Set({ 0, 0, object->Width, object->Height });
+	int x = (buffer.GetWidth() - object->Width) / 2;
+	int y = (buffer.GetHeight() - object->Height) / 2;
+	object->Set({ x, y, x + object->Width, y + object->Height });
 	object->Render(buffer);
 	std::cout << "\x1b[H" << buffer.ToString() << std::flush;
 }
@@ -16,7 +18,11 @@ void Render(Simple::Buffer& buffer, std::shared_ptr<Simple::Base::Renderable>& o
 int main() {
 	SetConsoleOutputCP(CP_UTF8);
 
-	auto buffer = Simple::Buffer(120, 30);
+	CONSOLE_SCREEN_BUFFER_INFO csbi;
+	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+	GetConsoleScreenBufferInfo(hOut, &csbi);
+
+	auto buffer = Simple::Buffer(csbi.dwSize.X, csbi.dwSize.Y);
 	std::atomic<bool> loop = true;
 
 	auto iNamaDepan = Input("Nama Depan");
@@ -174,17 +180,25 @@ int main() {
 	HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
 	INPUT_RECORD record[128];
 	DWORD size = 0;
+	std::atomic<bool> needUpdate = false;
 
+	std::cout << "\x1b[?25l";
 	Render(buffer, vLayout);
-
 	while (loop) {
 		if (ReadConsoleInput(hIn, record, 128, &size)) {
 			for (DWORD i = 0; i < size; ++i) {
-				if (record[i].EventType == KEY_EVENT && record[i].Event.KeyEvent.bKeyDown)
+				if (record[i].EventType == KEY_EVENT && record[i].Event.KeyEvent.bKeyDown) {
 					vContainer->OnKey(record[i].Event.KeyEvent);
+					
+					if (!needUpdate)
+						needUpdate = true;
+				}
 			}
+		}
 
+		if (needUpdate) {
 			Render(buffer, vLayout);
+			needUpdate = false;
 		}
 	}
 

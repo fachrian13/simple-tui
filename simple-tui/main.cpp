@@ -1,9 +1,5 @@
 ﻿#include "simple.h"
 #include <iostream>
-#include <chrono>
-#include <atomic>
-
-using namespace std::chrono_literals;
 
 void Render(Simple::Buffer& buffer, std::shared_ptr<Simple::Base::Renderable>& object) {
 	buffer.Clear();
@@ -22,8 +18,15 @@ int main() {
 	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
 	GetConsoleScreenBufferInfo(hOut, &csbi);
 
-	auto buffer = Simple::Buffer(csbi.dwSize.X, csbi.dwSize.Y);
-	std::atomic<bool> loop = true;
+	auto buffer = Simple::Buffer(
+		csbi.dwSize.X,
+		csbi.dwSize.Y,
+		Simple::Pixel(
+			Simple::Color(Simple::Palette16::Default),
+			Simple::Color("#81a1c1")
+		)
+	);
+	bool loop = true;
 
 	auto iNamaDepan = Input("Nama Depan");
 	iNamaDepan->Width = 24;
@@ -180,7 +183,7 @@ int main() {
 	HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
 	INPUT_RECORD record[128];
 	DWORD size = 0;
-	std::atomic<bool> needUpdate = false;
+	bool needUpdate = false;
 
 	std::cout << "\x1b[?25l";
 	Render(buffer, vLayout);
@@ -189,7 +192,7 @@ int main() {
 			for (DWORD i = 0; i < size; ++i) {
 				if (record[i].EventType == KEY_EVENT && record[i].Event.KeyEvent.bKeyDown) {
 					vContainer->OnKey(record[i].Event.KeyEvent);
-					
+
 					if (!needUpdate)
 						needUpdate = true;
 				}

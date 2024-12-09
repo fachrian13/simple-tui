@@ -10,7 +10,7 @@
 #include <windows.h>
 
 namespace Simple {
-	enum Color : int {
+	enum class Palette16 : int {
 		Black = 30,
 		Red = 31,
 		Green = 32,
@@ -20,6 +20,7 @@ namespace Simple {
 		Cyan = 36,
 		White = 37,
 		Default = 39,
+		Reset = 0,
 		BrightBlack = 90,
 		BrightRed = 91,
 		BrightGreen = 92,
@@ -29,7 +30,377 @@ namespace Simple {
 		BrightCyan = 96,
 		BrightWhite = 97
 	};
+	enum class Palette256 : int { /* THANKS TO CHATGPT */
+		Black = 0,
+		Red = 1,
+		Green = 2,
+		Yellow = 3,
+		Blue = 4,
+		Magenta = 5,
+		Cyan = 6,
+		White = 7,
+		Gray = 8,
+		LightRed = 9,
+		LightGreen = 10,
+		LightYellow = 11,
+		LightBlue = 12,
+		LightMagenta = 13,
+		LightCyan = 14,
+		LightWhite = 15,
+		DeepRed = 16,
+		RustRed = 17,
+		BurntOrange = 18,
+		Goldenrod = 19,
+		OliveGreen = 20,
+		MossGreen = 21,
+		TealGreen = 22,
+		SeafoamGreen = 23,
+		SkyBlue = 24,
+		OceanBlue = 25,
+		RoyalBlue = 26,
+		Violet = 27,
+		Purple = 28,
+		Lavender = 29,
+		Plum = 30,
+		Fuchsia = 31,
+		EmeraldGreen = 32,
+		LimeGreen = 33,
+		BrightYellow = 34,
+		Sunflower = 35,
+		Amber = 36,
+		Copper = 37,
+		Saffron = 38,
+		EmeraldIsle = 39,
+		Turquoise = 40,
+		Periwinkle = 41,
+		CobaltBlue = 42,
+		MidnightBlue = 43,
+		NavyBlue = 44,
+		SlateBlue = 45,
+		Indigo = 46,
+		MagentaRose = 47,
+		CherryRed = 48,
+		Coral = 49,
+		SalmonPink = 50,
+		Peach = 51,
+		HoneyYellow = 52,
+		LemonYellow = 53,
+		GoldenYellow = 54,
+		Chartreuse = 55,
+		CeleryGreen = 56,
+		LightSeaGreen = 57,
+		MintGreen = 58,
+		ForestGreen = 59,
+		DarkTeal = 60,
+		CypressGreen = 61,
+		PineGreen = 62,
+		OliveDrab = 63,
+		SandBrown = 64,
+		SiennaBrown = 65,
+		Cinnamon = 66,
+		EarthBrown = 67,
+		Chestnut = 68,
+		Mahogany = 69,
+		Burgundy = 70,
+		Grape = 71,
+		LavenderBlush = 72,
+		SoftViolet = 73,
+		DeepPurple = 74,
+		HeatherPurple = 75,
+		Mulberry = 76,
+		Mauve = 77,
+		Pink = 78,
+		CottonCandy = 79,
+		BlushPink = 80,
+		HotPink = 81,
+		DeepPink = 82,
+		BrightMagenta = 83,
+		VividFuchsia = 84,
+		Crimson = 85,
+		Scarlet = 86,
+		Firebrick = 87,
+		DarkRed = 88,
+		WineRed = 89,
+		BloodRed = 90,
+		BrickRed = 91,
+		Tangerine = 92,
+		Apricot = 93,
+		Papaya = 94,
+		GoldenBrown = 95,
+		Ochre = 96,
+		Mustard = 97,
+		Khaki = 98,
+		Sandstone = 99,
+		Beige = 100,
+		Wheat = 101,
+		Honeydew = 102,
+		Ivory = 103,
+		Vanilla = 104,
+		Almond = 105,
+		LightPeach = 106,
+		Cantaloupe = 107,
+		Melon = 108,
+		CoralPink = 109,
+		PaleRose = 110,
+		MistyRose = 111,
+		BabyPink = 112,
+		SoftPeach = 113,
+		Peony = 114,
+		CarnationPink = 115,
+		DeepCarnation = 116,
+		BalletSlipper = 117,
+		Watermelon = 118,
+		Fandango = 119,
+		Ruby = 120,
+		Sunset = 121,
+		Daffodil = 122,
+		GoldenHaze = 123,
+		LemonChiffon = 124,
+		LightAmber = 125,
+		PapayaWhip = 126,
+		BlanchedAlmond = 127,
+		SaffronGold = 128,
+		Tawny = 129,
+		TuscanTan = 130,
+		DesertSand = 131,
+		Sepia = 132,
+		Mocha = 133,
+		Coffee = 134,
+		Latte = 135,
+		LightCocoa = 136,
+		Chocolate = 137,
+		Mushroom = 138,
+		Pewter = 139,
+		SlateGray = 140,
+		Charcoal = 141,
+		Ash = 142,
+		Granite = 143,
+		Gunmetal = 144,
+		DarkSlate = 145,
+		Lead = 146,
+		Shadow = 147,
+		Silver = 148,
+		Steel = 149,
+		Zinc = 150,
+		Titanium = 151,
+		PewterBlue = 152,
+		Stone = 153,
+		Moss = 154,
+		Bamboo = 155,
+		Citrus = 156,
+		Olive = 157,
+		Teal = 158,
+		Seaweed = 159,
+		MarineBlue = 160,
+		Aquamarine = 161,
+		TurquoiseGreen = 162,
+		TropicalBlue = 163,
+		ArcticBlue = 164,
+		Blueberry = 165,
+		Midnight = 166,
+		DarkSapphire = 167,
+		IndigoBlue = 168,
+		Sapphire = 169,
+		Cerulean = 170,
+		PeriwinkleBlue = 171,
+		LavenderBlue = 172,
+		VioletBlue = 173,
+		PurpleRain = 174,
+		DaffodilBlue = 175,
+		MauveBlue = 176,
+		CosmicPurple = 177,
+		GalaxyBlue = 178,
+		FrozenBlue = 179,
+		Aqua = 180,
+		TropicalAqua = 181,
+		LagoonBlue = 182,
+		MysticGreen = 183,
+		MistBlue = 184,
+		FrostedBlue = 185,
+		PeacockBlue = 186,
+		DeepWaterBlue = 187,
+		SkyBlueLight = 188,
+		SeafoamBlue = 189,
+		IceBlue = 190,
+		FrozenLavender = 191,
+		Cobalt = 192,
+		BlueMoon = 193,
+		RoyalPurple = 194,
+		LightOrchid = 195,
+		Lupine = 196,
+		PlumPurple = 197,
+		GrapeJam = 198,
+		Purpleberry = 199,
+		CrimsonRed = 200,
+		FadedRed = 201,
+		Firestorm = 202,
+		Vermilion = 203,
+		Rust = 204,
+		BurntSienna = 205,
+		CopperPenny = 206,
+		SunsetOrange = 207,
+		TangerineTango = 208,
+		Flame = 209,
+		Sunburst = 210,
+		GoldenOrange = 211,
+		Butterscotch = 212,
+		AutumnOrange = 213,
+		Pumpkin = 214,
+		Melonade = 215,
+		Marigold = 216,
+		Flamingo = 217,
+		Carnation = 218,
+		StrawberryRed = 219,
+		CherryBlossom = 220,
+		LushGreen = 221,
+		VividGreen = 222,
+		ElectricGreen = 223,
+		Lime = 224,
+		Mint = 225,
+		PastelGreen = 226,
+		PaleEmerald = 227,
+		Jade = 228,
+		Verdant = 229,
+		TurquoiseBlue = 230,
+		DeepOcean = 231,
+		CharcoalGray = 232,
+		Graphite = 233,
+		SmokyGray = 234,
+		Ashen = 235,
+		LeadGray = 236,
+		Slate = 237,
+		Foggy = 238,
+		StoneGray = 239,
+		Cinder = 240,
+		Rustic = 241,
+		Soot = 242,
+		PewterGray = 243,
+		GunmetalGray = 244,
+		DarkCharcoal = 245,
+		DeepSlate = 246,
+		StormyGray = 247,
+		DimGray = 248,
+		NightGray = 249,
+		Fog = 250,
+		SmokyWhite = 251,
+		Cloud = 252,
+		Platinum = 253,
+		SilverMist = 254,
+		GhostWhite = 255
+	};
 
+	class Color final {
+	public:
+		Color(Palette16 value) :
+			colorType(Type::Palette16),
+			Red(static_cast<int>(value)),
+			Green(static_cast<int>(value)),
+			Blue(static_cast<int>(value))
+		{
+		}
+		Color(Palette256 value) :
+			colorType(Type::Palette256),
+			Red(static_cast<int>(value)),
+			Green(static_cast<int>(value)),
+			Blue(static_cast<int>(value))
+		{
+		}
+		Color(int red, int green, int blue) :
+			colorType(Type::RGB),
+			Red(red),
+			Green(green),
+			Blue(blue)
+		{
+		}
+		Color(std::string hex) {
+			if (hex.size() != 7 || hex[0] != '#')
+				return;
+
+			this->colorType = Type::RGB;
+			this->Red = std::stoi(hex.substr(1, 2), nullptr, 16); // Red
+			this->Green = std::stoi(hex.substr(3, 2), nullptr, 16); // Green
+			this->Blue = std::stoi(hex.substr(5, 2), nullptr, 16); // Blue
+		}
+		std::string Foreground() {
+			std::ostringstream ostr;
+
+			switch (this->colorType) {
+			case Type::Palette16:
+				ostr << "\x1b[" << this->Red << "m";
+				break;
+			case Type::Palette256:
+				ostr << "\x1b[38;5;" << this->Red << "m";
+				break;
+			case Type::RGB:
+				ostr << "\x1b[38;2;" << this->Red << ";" << this->Green << ";" << this->Blue << "m";
+				break;
+			}
+
+			return ostr.str();
+		}
+		void Foreground(std::ostringstream& ostr) {
+			switch (this->colorType) {
+			case Type::Palette16:
+				ostr << "\x1b[" << this->Red << "m";
+				break;
+			case Type::Palette256:
+				ostr << "\x1b[38;5;" << this->Red << "m";
+				break;
+			case Type::RGB:
+				ostr << "\x1b[38;2;" << this->Red << ";" << this->Green << ";" << this->Blue << "m";
+				break;
+			}
+		}
+		std::string Background() {
+			std::ostringstream ostr;
+
+			switch (this->colorType) {
+			case Type::Palette16:
+				ostr << "\x1b[" << this->Red + 10 << "m";
+				break;
+			case Type::Palette256:
+				ostr << "\x1b[48;5;" << this->Red << "m";
+				break;
+			case Type::RGB:
+				ostr << "\x1b[48;2;" << this->Red << ";" << this->Green << ";" << this->Blue << "m";
+				break;
+			}
+
+			return ostr.str();
+		}
+		void Background(std::ostringstream& ostr) {
+			switch (this->colorType) {
+			case Type::Palette16:
+				ostr << "\x1b[" << this->Red + 10 << "m";
+				break;
+			case Type::Palette256:
+				ostr << "\x1b[48;5;" << this->Red << "m";
+				break;
+			case Type::RGB:
+				ostr << "\x1b[48;2;" << this->Red << ";" << this->Green << ";" << this->Blue << "m";
+				break;
+			}
+		}
+		bool operator ==(const Color& other) {
+			return this->Red == other.Red && this->Green == other.Green && this->Blue == other.Blue;
+		}
+		bool operator !=(const Color& other) {
+			return !(*this == other);
+		}
+
+	public:
+		int Red = 0;
+		int Green = 0;
+		int Blue = 0;
+
+	private:
+		enum class Type {
+			Palette16,
+			Palette256,
+			RGB
+		};
+		Type colorType = Type::Palette16;
+	};
 	class Pixel final {
 	public:
 		Pixel() = default;
@@ -44,7 +415,6 @@ namespace Simple {
 			Value(value)
 		{
 		}
-
 		bool operator ==(const Pixel& other) {
 			return
 				this->Bold == other.Bold &&
@@ -71,8 +441,8 @@ namespace Simple {
 		bool Invert = false;
 		bool Invisible = false;
 		bool Strikethrough = false;
-		Color Background = Color::Default;
-		Color Foreground = Color::Default;
+		Color Background = Palette16::Default;
+		Color Foreground = Palette16::Default;
 		std::string Value = " ";
 	};
 	class Buffer final {
@@ -108,7 +478,7 @@ namespace Simple {
 					result << "\n";
 
 				for (int x = 0; x < this->width; ++x) {
-					const Pixel& next = this->pixels.at(y * this->width + x);
+					Pixel& next = this->pixels.at(y * this->width + x);
 
 					if (prev.Bold != next.Bold)
 						result << (next.Bold ? "\x1b[1m" : "\x1b[22m");
@@ -127,9 +497,10 @@ namespace Simple {
 					if (prev.Strikethrough != next.Strikethrough)
 						result << (next.Strikethrough ? "\x1b[9m" : "\x1b[29m");
 					if (prev.Foreground != next.Foreground)
-						result << next.Background << ";";
+						next.Foreground.Foreground(result);
 					if (prev.Background != next.Background)
-						result << next.Background + 10 << "m";
+						next.Background.Background(result);
+
 					result << next.Value;
 
 					prev = next;

@@ -18,14 +18,7 @@ int main() {
 	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
 	GetConsoleScreenBufferInfo(hOut, &csbi);
 
-	auto buffer = Simple::Buffer(
-		csbi.dwSize.X,
-		csbi.dwSize.Y,
-		Simple::Pixel(
-			Simple::Color(Simple::Palette16::Default),
-			Simple::Color("#81a1c1")
-		)
-	);
+	auto buffer = Simple::Buffer(csbi.dwSize.X, csbi.dwSize.Y);
 	bool loop = true;
 
 	auto iNamaDepan = Input("Nama Depan");
@@ -125,7 +118,7 @@ int main() {
 	auto bKeluar = Button("Keluar", [&loop]() { loop = false; });
 
 	auto vLayout = VLayout(
-		Text("       PENDAFTARAN CALON MAHASISWA BARU       ") | BorderStyle(DoubleLine),
+		Text("       PENDAFTARAN CALON MAHASISWA BARU       ") | Foreground(Simple::Color("#88c0d0")) | BorderStyle(DoubleLine),
 		Text("Nama Lengkap"),
 		HLayout(iNamaDepan, Text(" "), iNamaBelakang),
 		Text("Jenis Kelamin"),
@@ -155,7 +148,7 @@ int main() {
 		),
 		bDaftar,
 		bKeluar
-	) | BorderStyle(Rounded);
+	) | Foreground(Simple::Color(Simple::Palette256::LimeGreen3)) | BorderStyle(Rounded);
 
 	auto vContainer = VContainer(
 		HContainer(iNamaDepan, iNamaBelakang),
